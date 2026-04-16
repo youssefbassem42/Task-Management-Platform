@@ -5,14 +5,14 @@ const { asyncHandler, createHttpError } = require("../utils/http");
 const { ensureObjectId } = require("../utils/validators");
 
 const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({}, "name email").sort({ name: 1 });
+  const users = await User.find({}, "name email avatar").sort({ name: 1 });
   res.json(users);
 });
 
 const getUserById = asyncHandler(async (req, res) => {
   ensureObjectId(req.params.id, "userId");
 
-  const user = await User.findById(req.params.id, "name email");
+  const user = await User.findById(req.params.id, "name email avatar");
   if (!user) {
     throw createHttpError(404, "User not found");
   }

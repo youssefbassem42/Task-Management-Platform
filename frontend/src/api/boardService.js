@@ -10,8 +10,20 @@ export default {
   getBoardById(boardId) {
     return axiosClient.get(`/boards/${boardId}`)
   },
+  getBoardInvite(inviteCode) {
+    return axiosClient.get(`/boards/join/${inviteCode}`)
+  },
+  joinBoardByInvite(inviteCode) {
+    return axiosClient.post(`/boards/join/${inviteCode}`)
+  },
   updateBoardMembers(boardId, memberIds) {
     return axiosClient.put(`/boards/${boardId}/members`, { memberIds })
+  },
+  getBoardActivity(boardId) {
+    return axiosClient.get(`/boards/${boardId}/activity`)
+  },
+  exportBoard(boardId) {
+    return axiosClient.get(`/boards/${boardId}/export`, { responseType: 'blob' })
   },
   deleteBoard(boardId) {
     return axiosClient.delete(`/boards/${boardId}`)
@@ -42,5 +54,27 @@ export default {
   },
   addComment(boardId, taskId, content) {
     return axiosClient.post(`/boards/${boardId}/tasks/${taskId}/comments`, { content })
+  },
+  getBoardAttachments(boardId) {
+    return axiosClient.get(`/boards/${boardId}/attachments`)
+  },
+  uploadBoardAttachment(boardId, file) {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    return axiosClient.post(`/boards/${boardId}/attachments`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+  getTaskAttachments(boardId, taskId) {
+    return axiosClient.get(`/boards/${boardId}/tasks/${taskId}/attachments`)
+  },
+  uploadTaskAttachment(boardId, taskId, file) {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    return axiosClient.post(`/boards/${boardId}/tasks/${taskId}/attachments`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
   }
 }

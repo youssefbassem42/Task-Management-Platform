@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { asyncHandler, createHttpError } = require("../utils/http");
 const { requireNonEmptyString } = require("../utils/validators");
+const { buildFileUrl } = require("../utils/files");
 
 const generateToken = (userId) =>
   jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -11,6 +12,7 @@ const serializeAuthUser = (user) => ({
   _id: user._id,
   name: user.name,
   email: user.email,
+  avatar: user.avatar || "",
   token: generateToken(user._id),
 });
 
@@ -60,6 +62,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
     _id: req.user._id,
     name: req.user.name,
     email: req.user.email,
+    avatar: req.user.avatar || "",
   });
 });
 
@@ -96,9 +99,26 @@ const updateProfile = asyncHandler(async (req, res) => {
   res.json(serializeAuthUser(user));
 });
 
+const updateProfileAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw createHttpError(400, "Avatar image is required");
+  }
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    throw createHttpError(404, "User not found");
+  }
+
+  user.avatar = buildFileUrl(req, req.file.filename);
+  await user.save();
+
+  res.json(serializeAuthUser(user));
+});
+
 module.exports = {
   registerUser,
   loginUser,
   getUserProfile,
   updateProfile,
+  updateProfileAvatar,
 };

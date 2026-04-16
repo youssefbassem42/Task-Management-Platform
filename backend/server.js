@@ -1,13 +1,18 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const boardRoutes = require("./routes/boardRoutes");
 const { errorHandler } = require("./middlewares/errorMiddleware");
+const { ensureUploadsDir } = require("./utils/files");
 
 const app = express();
+
+fs.mkdirSync(ensureUploadsDir, { recursive: true });
 
 app.use(
   cors({
@@ -18,6 +23,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/uploads", express.static(path.resolve(ensureUploadsDir)));
 
 connectDB();
 

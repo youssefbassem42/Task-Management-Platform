@@ -7,11 +7,16 @@ export const useBoardStore = defineStore('boards', {
     currentBoard: null,
     members: [],
     tasks: [],
+    activity: [],
+    boardAttachments: [],
     commentsByTask: {},
+    attachmentsByTask: {},
     boardsLoading: false,
     boardLoading: false,
     taskMutationLoading: false,
     commentsLoading: false,
+    activityLoading: false,
+    attachmentsLoading: false,
     error: null
   }),
   getters: {
@@ -83,6 +88,17 @@ export const useBoardStore = defineStore('boards', {
     },
     async fetchBoardWorkspace(boardId, filters = {}) {
       await Promise.all([this.fetchBoard(boardId), this.fetchTasks(boardId, filters)])
+    },
+    async fetchBoardInvite(inviteCode) {
+      return boardService.getBoardInvite(inviteCode)
+    },
+    async joinBoardByInvite(inviteCode) {
+      const data = await boardService.joinBoardByInvite(inviteCode)
+      const existingBoard = this.boards.find((board) => board._id === data.board._id)
+      if (!existingBoard) {
+        this.boards = [data.board, ...this.boards]
+      }
+      return data
     },
     async saveBoardMembers(boardId, memberIds) {
       this.taskMutationLoading = true
@@ -212,6 +228,89 @@ export const useBoardStore = defineStore('boards', {
       } finally {
         this.commentsLoading = false
       }
+    },
+    async fetchBoardActivity(boardId) {
+      this.activityLoading = true
+      this.error = null
+
+      try {
+        this.activity = await boardService.getBoardActivity(boardId)
+        return this.activity
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.activityLoading = false
+      }
+    },
+    async fetchBoardAttachments(boardId) {
+      this.attachmentsLoading = true
+      this.error = null
+
+      try {
+        this.boardAttachments = await boardService.getBoardAttachments(boardId)
+        return this.boardAttachments
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.attachmentsLoading = false
+      }
+    },
+    async uploadBoardAttachment(boardId, file) {
+      this.attachmentsLoading = true
+      this.error = null
+
+      try {
+        const attachment = await boardService.uploadBoardAttachment(boardId, file)
+        this.boardAttachments = [attachment, ...this.boardAttachments]
+        return attachment
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.attachmentsLoading = false
+      }
+    },
+    async fetchTaskAttachments(boardId, taskId) {
+      this.attachmentsLoading = true
+      this.error = null
+
+      try {
+        const attachments = await boardService.getTaskAttachments(boardId, taskId)
+        this.attachmentsByTask = {
+          ...this.attachmentsByTask,
+          [taskId]: attachments
+        }
+        return attachments
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.attachmentsLoading = false
+      }
+    },
+    async uploadTaskAttachment(boardId, taskId, file) {
+      this.attachmentsLoading = true
+      this.error = null
+
+      try {
+        const attachment = await boardService.uploadTaskAttachment(boardId, taskId, file)
+        const currentAttachments = this.attachmentsByTask[taskId] || []
+        this.attachmentsByTask = {
+          ...this.attachmentsByTask,
+          [taskId]: [attachment, ...currentAttachments]
+        }
+        return attachment
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.attachmentsLoading = false
+      }
+    },
+    async exportBoard(boardId) {
+      return boardService.exportBoard(boardId)
     }
   }
 })

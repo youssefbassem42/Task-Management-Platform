@@ -1,7 +1,9 @@
 const Comment = require("../models/Comment");
+const FileAttachment = require("../models/FileAttachment");
 const Task = require("../models/Task");
 const User = require("../models/User");
 const { asyncHandler, createHttpError } = require("../utils/http");
+const { logBoardActivity } = require("../utils/activity");
 const {
   requireNonEmptyString,
   optionalTrimmedString,
@@ -11,6 +13,7 @@ const {
 
 const STATUS_VALUES = ["TODO", "IN_PROGRESS", "DONE"];
 const PRIORITY_VALUES = ["LOW", "MEDIUM", "HIGH"];
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const canEditTaskStatus = (task, board, userId) => {
   const normalizedUserId = userId.toString();
@@ -78,12 +81,25 @@ const getTasks = asyncHandler(async (req, res) => {
     filters.assigneeId = req.user._id;
   }
 
+  if (req.query.assigneeId && req.query.mine !== "true") {
+    ensureObjectId(req.query.assigneeId, "assigneeId");
+    filters.assigneeId = req.query.assigneeId;
+  }
+
+  if (req.query.priority) {
+    filters.priority = ensureEnum(req.query.priority, PRIORITY_VALUES, "priority");
+  }
+
   if (req.query.q) {
-    filters.title = { $regex: req.query.q.trim(), $options: "i" };
+    const query = req.query.q.trim();
+    if (query) {
+      const pattern = new RegExp(escapeRegex(query), "i");
+      filters.$or = [{ title: pattern }, { description: pattern }];
+    }
   }
 
   const tasks = await Task.find(filters)
-    .populate("assigneeId", "name email")
+    .populate("assigneeId", "name email avatar")
     .sort({ createdAt: -1 });
 
   res.json(tasks.map((task) => serializeTask(task, req.board.ownerId, req.user._id)));
@@ -117,11 +133,20 @@ const createTask = asyncHandler(async (req, res) => {
     dueDate,
   });
 
-  await task.populate("assigneeId", "name email");
+  await task.populate("assigneeId", "name email avatar");
+  await logBoardActivity({
+    boardId: req.board._id,
+    userId: req.user._id,
+    action: `created task "${task.title}"`,
+    entity: "task",
+  });
   res.status(201).json(serializeTask(task, req.board.ownerId, req.user._id));
 });
 
 const updateTask = asyncHandler(async (req, res) => {
+  const previousStatus = req.task.status;
+  const originalTitle = req.task.title;
+
   if (req.body.title !== undefined) {
     req.task.title = requireNonEmptyString(req.body.title, "title", 120);
   }
@@ -156,7 +181,23 @@ const updateTask = asyncHandler(async (req, res) => {
   }
 
   await req.task.save();
-  await req.task.populate("assigneeId", "name email");
+  await req.task.populate("assigneeId", "name email avatar");
+
+  await logBoardActivity({
+    boardId: req.board._id,
+    userId: req.user._id,
+    action: `updated task "${req.task.title}"`,
+    entity: "task",
+  });
+
+  if (previousStatus !== req.task.status) {
+    await logBoardActivity({
+      boardId: req.board._id,
+      userId: req.user._id,
+      action: `changed "${req.task.title || originalTitle}" status to ${req.task.status}`,
+      entity: "task",
+    });
+  }
 
   res.json(serializeTask(req.task, req.board.ownerId, req.user._id));
 });
@@ -170,6 +211,13 @@ const updateTaskStatus = asyncHandler(async (req, res) => {
 
   req.task.status = status;
   await req.task.save();
+  await req.task.populate("assigneeId", "name email avatar");
+  await logBoardActivity({
+    boardId: req.board._id,
+    userId: req.user._id,
+    action: `changed "${req.task.title}" status to ${status}`,
+    entity: "task",
+  });
 
   res.json(serializeTask(req.task, req.board.ownerId, req.user._id));
 });
@@ -177,6 +225,13 @@ const updateTaskStatus = asyncHandler(async (req, res) => {
 const archiveTask = asyncHandler(async (req, res) => {
   req.task.isArchived = req.body.isArchived !== undefined ? Boolean(req.body.isArchived) : true;
   await req.task.save();
+  await req.task.populate("assigneeId", "name email avatar");
+  await logBoardActivity({
+    boardId: req.board._id,
+    userId: req.user._id,
+    action: `${req.task.isArchived ? "archived" : "restored"} task "${req.task.title}"`,
+    entity: "task",
+  });
 
   res.json(serializeTask(req.task, req.board.ownerId, req.user._id));
 });
@@ -184,8 +239,16 @@ const archiveTask = asyncHandler(async (req, res) => {
 const deleteTask = asyncHandler(async (req, res) => {
   await Promise.all([
     Comment.deleteMany({ taskId: req.task._id }),
+    FileAttachment.deleteMany({ taskId: req.task._id }),
     req.task.deleteOne(),
   ]);
+
+  await logBoardActivity({
+    boardId: req.board._id,
+    userId: req.user._id,
+    action: `deleted task "${req.task.title}"`,
+    entity: "task",
+  });
 
   res.json({ message: "Task deleted successfully" });
 });

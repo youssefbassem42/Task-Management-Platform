@@ -51,4 +51,6 @@ const taskSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+taskSchema.index({ boardId: 1, isArchived: 1, status: 1, priority: 1, assigneeId: 1, createdAt: -1 });
+
 module.exports = mongoose.model("Task", taskSchema);

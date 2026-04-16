@@ -12,5 +12,13 @@ export default {
   },
   updateProfile(payload) {
     return axiosClient.put('/auth/profile', payload)
+  },
+  uploadAvatar(file) {
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    return axiosClient.post('/auth/profile/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
   }
 }

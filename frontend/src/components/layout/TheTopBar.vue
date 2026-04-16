@@ -15,7 +15,7 @@
       </button>
       <div ref="menuRef" class="user-menu-wrapper" v-if="authStore.user">
         <button class="user-menu-btn" @click="userMenuOpen = !userMenuOpen">
-          <AppAvatar :name="authStore.user.name" size="md" />
+          <AppAvatar :src="authStore.user.avatar" :name="authStore.user.name" size="md" />
           <div class="user-info hidden-mobile">
             <span class="user-name">{{ authStore.user.name }}</span>
             <span class="user-email">{{ authStore.user.email }}</span>

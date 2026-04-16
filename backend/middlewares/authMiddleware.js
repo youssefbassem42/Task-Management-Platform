@@ -67,7 +67,7 @@ const loadTask = asyncHandler(async (req, res, next) => {
   const task = await Task.findOne({
     _id: req.params.taskId,
     boardId: req.params.boardId,
-  }).populate("assigneeId", "name email");
+  }).populate("assigneeId", "name email avatar");
 
   if (!task) {
     throw createHttpError(404, "Task not found");

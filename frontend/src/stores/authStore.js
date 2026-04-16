@@ -6,7 +6,8 @@ function mapAuthUser(payload) {
     ? {
         _id: payload._id,
         name: payload.name,
-        email: payload.email
+        email: payload.email,
+        avatar: payload.avatar || ''
       }
     : null
 }
@@ -100,6 +101,25 @@ export const useAuthStore = defineStore('auth', {
         this.user = {
           ...this.user,
           ...mapAuthUser({ ...this.user, ...payload, ...data })
+        }
+        return data
+      } catch (err) {
+        this.error = err.message
+        throw err
+      } finally {
+        this.isLoading = false
+      }
+    },
+    async uploadAvatar(file) {
+      this.isLoading = true
+      this.error = null
+
+      try {
+        const data = await authService.uploadAvatar(file)
+        this.setToken(data.token || this.token)
+        this.user = {
+          ...this.user,
+          ...mapAuthUser({ ...this.user, ...data })
         }
         return data
       } catch (err) {

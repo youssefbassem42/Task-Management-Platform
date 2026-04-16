@@ -10,35 +10,106 @@
       </div>
 
       <div class="board-header-actions">
-        <AppButton v-if="boardStore.currentBoard.isOwner" variant="secondary" @click="membersModalOpen = true">
-          Manage Members
+        <AppButton v-if="boardStore.currentBoard.isOwner" variant="secondary" @click="inviteModalOpen = true">
+          Invite
+        </AppButton>
+        <AppButton v-if="boardStore.currentBoard.isOwner" variant="secondary" @click="downloadBoardExport">
+          Export Excel
         </AppButton>
         <AppButton v-if="boardStore.currentBoard.isOwner" @click="openCreateModal">New Task</AppButton>
-        <AppButton
-          v-if="boardStore.currentBoard.isOwner"
-          variant="danger"
-          @click="confirmDeleteBoard"
-        >
+        <AppButton v-if="boardStore.currentBoard.isOwner" variant="danger" @click="confirmDeleteBoard">
           Delete Board
         </AppButton>
       </div>
     </section>
 
-    <section class="board-toolbar">
-      <AppInput v-model="filters.search" label="Search" placeholder="Search by title" />
+    <section class="board-tabs">
+      <button
+        v-for="tab in tabs"
+        :key="tab.value"
+        type="button"
+        class="tab-chip"
+        :class="{ active: activeTab === tab.value }"
+        @click="setActiveTab(tab.value)"
+      >
+        {{ tab.label }}
+      </button>
+    </section>
 
+    <section v-if="activeTab !== 'activity'" class="board-toolbar">
+      <AppInput v-model="filters.search" label="Search" placeholder="Search title or description" />
+      <AppSelect v-model="filters.status" label="Status" :options="statusFilterOptions" />
+      <AppSelect v-model="filters.priority" label="Priority" :options="priorityFilterOptions" />
+      <AppSelect v-model="filters.assigneeId" label="Assignee" :options="assigneeFilterOptions" />
       <label class="checkbox-row">
         <input v-model="filters.myTasks" type="checkbox" />
         <span>My Tasks</span>
       </label>
-
-      <label class="checkbox-row">
-        <input v-model="filters.showArchived" type="checkbox" />
-        <span>Archive tasks</span>
-      </label>
     </section>
 
-    <div v-if="boardStore.boardLoading && !boardStore.tasks.length" class="loading-wrap">
+    <section v-if="activeTab !== 'activity'" class="board-attachments-panel">
+      <div class="section-head">
+        <div>
+          <h2>Board Files</h2>
+          <p class="text-muted">Shared attachments for the whole board.</p>
+        </div>
+
+        <div class="upload-inline">
+          <input ref="boardAttachmentInput" type="file" class="hidden-input" @change="handleBoardAttachmentSelect" />
+          <AppButton variant="secondary" @click="boardAttachmentInput?.click()">Choose File</AppButton>
+          <AppButton
+            :loading="boardStore.attachmentsLoading"
+            :disabled="!boardAttachmentFile"
+            @click="uploadBoardAttachment"
+          >
+            Upload
+          </AppButton>
+        </div>
+      </div>
+
+      <div v-if="boardStore.boardAttachments.length" class="attachment-list">
+        <article v-for="attachment in boardStore.boardAttachments" :key="attachment._id" class="attachment-card">
+          <div class="attachment-main">
+            <strong>{{ attachment.fileName }}</strong>
+            <div class="attachment-meta">
+              <AppAvatar :src="attachment.uploadedBy?.avatar" :name="attachment.uploadedBy?.name" size="sm" />
+              <span>{{ attachment.uploadedBy?.name || 'Unknown user' }}</span>
+              <span>{{ formatDate(attachment.createdAt, 'MMM dd, yyyy p') }}</span>
+            </div>
+          </div>
+          <a :href="attachment.fileUrl" target="_blank" rel="noreferrer">Download</a>
+        </article>
+      </div>
+      <AppEmptyState
+        v-else
+        title="No board files yet"
+        description="Upload a shared file so everyone on the board can access it."
+      />
+    </section>
+
+    <div v-if="activeTab === 'activity'" class="activity-panel">
+      <div v-if="boardStore.activityLoading" class="loading-wrap">
+        <AppSpinner size="3rem" />
+      </div>
+
+      <div v-else-if="boardStore.activity.length" class="activity-list">
+        <article v-for="entry in boardStore.activity" :key="entry._id" class="activity-card">
+          <AppAvatar :src="entry.userId?.avatar" :name="entry.userId?.name" size="md" />
+          <div>
+            <strong>{{ entry.userId?.name || 'Unknown user' }}</strong>
+            <p>{{ entry.action }}</p>
+            <span class="text-muted">{{ formatDate(entry.createdAt, 'MMM dd, yyyy p') }}</span>
+          </div>
+        </article>
+      </div>
+      <AppEmptyState
+        v-else
+        title="No activity yet"
+        description="Task changes, comments, and joins will show up here."
+      />
+    </div>
+
+    <div v-else-if="boardStore.boardLoading && !boardStore.tasks.length" class="loading-wrap">
       <AppSpinner size="3rem" />
     </div>
 
@@ -63,7 +134,7 @@
             :key="task._id"
             class="task-card"
             :class="{ overdue: task.isOverdue }"
-            draggable="true"
+            :draggable="!task.isArchived"
             @dragstart="handleDragStart(task)"
             @click="openTask(task)"
           >
@@ -77,7 +148,10 @@
             <p class="task-description">{{ task.description || 'No description' }}</p>
 
             <div class="task-meta">
-              <span>{{ task.assigneeId?.name || 'Unassigned' }}</span>
+              <div class="assignee-pill">
+                <AppAvatar :src="task.assigneeId?.avatar" :name="task.assigneeId?.name" size="sm" />
+                <span>{{ task.assigneeId?.name || 'Unassigned' }}</span>
+              </div>
               <span>{{ task.dueDate ? formatDate(task.dueDate) : 'No due date' }}</span>
             </div>
           </article>
@@ -97,32 +171,33 @@
       :board="boardStore.currentBoard"
       :members="assignableMembers"
       :comments="selectedTaskComments"
+      :attachments="selectedTaskAttachments"
       :loading="boardStore.taskMutationLoading || boardStore.commentsLoading"
+      :attachment-loading="boardStore.attachmentsLoading"
       @save="saveTask"
       @status-change="changeStatus"
       @archive="toggleArchive"
       @delete="deleteTask"
       @comment="addComment"
+      @attachment-upload="uploadTaskAttachment"
     />
 
-    <AppModal v-model="membersModalOpen" title="Board Members">
-      <AppSelect
-        v-model="memberIdsDraft"
-        label="Members"
-        :options="userStore.userOptions"
-        multiple
-      />
+    <AppModal v-model="inviteModalOpen" title="Invite people to this board">
+      <div class="invite-panel" v-if="boardStore.currentBoard">
+        <AppInput :model-value="inviteLink" label="Invite Link" readonly />
+        <p class="text-muted">Anyone with access to this link can request to join this board.</p>
+      </div>
 
       <template #footer>
-        <AppButton variant="ghost" @click="membersModalOpen = false">Cancel</AppButton>
-        <AppButton :loading="boardStore.taskMutationLoading" @click="saveMembers">Save Members</AppButton>
+        <AppButton variant="ghost" @click="inviteModalOpen = false">Close</AppButton>
+        <AppButton @click="copyInviteLink">Copy Link</AppButton>
       </template>
     </AppModal>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useBoardStore } from '@/stores/boardStore'
 import { useUserStore } from '@/stores/userStore'
@@ -138,6 +213,12 @@ const columns = [
   { label: 'Done', value: 'DONE' }
 ]
 
+const tabs = [
+  { label: 'Active', value: 'active' },
+  { label: 'Archived', value: 'archived' },
+  { label: 'Activity', value: 'activity' }
+]
+
 const route = useRoute()
 const router = useRouter()
 const boardStore = useBoardStore()
@@ -147,15 +228,35 @@ const uiStore = useUIStore()
 const confirmDialog = useConfirmDialog()
 
 const taskModalOpen = ref(false)
-const membersModalOpen = ref(false)
+const inviteModalOpen = ref(false)
 const selectedTask = ref(null)
 const draggedTask = ref(null)
-const memberIdsDraft = ref([])
+const activeTab = ref('active')
+const boardAttachmentFile = ref(null)
+const boardAttachmentInput = ref(null)
+let filterDebounceId = null
+
 const filters = ref({
   search: '',
   myTasks: false,
-  showArchived: false
+  status: '',
+  priority: '',
+  assigneeId: ''
 })
+
+const statusFilterOptions = [
+  { value: '', label: 'All statuses' },
+  { value: 'TODO', label: 'To Do' },
+  { value: 'IN_PROGRESS', label: 'In Progress' },
+  { value: 'DONE', label: 'Done' }
+]
+
+const priorityFilterOptions = [
+  { value: '', label: 'All priorities' },
+  { value: 'LOW', label: 'Low' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'HIGH', label: 'High' }
+]
 
 const assignableMembers = computed(() => {
   const boardMembers = boardStore.members || []
@@ -165,29 +266,14 @@ const assignableMembers = computed(() => {
   }))
 })
 
-const filteredTasks = computed(() => {
-  const search = filters.value.search.trim().toLowerCase()
-
-  return boardStore.tasks.filter((task) => {
-    if (!filters.value.showArchived && task.isArchived) {
-      return false
-    }
-
-    if (filters.value.myTasks && task.assigneeId?._id !== authStore.user?._id) {
-      return false
-    }
-
-    if (!search) {
-      return true
-    }
-
-    return task.title.toLowerCase().includes(search)
-  })
-})
+const assigneeFilterOptions = computed(() => [
+  { value: '', label: 'All assignees' },
+  ...assignableMembers.value
+])
 
 const groupedTasks = computed(() =>
   columns.reduce((acc, column) => {
-    acc[column.value] = filteredTasks.value.filter((task) => task.status === column.value)
+    acc[column.value] = boardStore.tasks.filter((task) => task.status === column.value)
     return acc
   }, {})
 )
@@ -197,34 +283,76 @@ const selectedTaskComments = computed(() => {
   return boardStore.commentsByTask[selectedTask.value._id] || []
 })
 
-const loadBoard = async () => {
-  try {
-    await Promise.all([
-      boardStore.fetchBoardWorkspace(route.params.id, { archived: filters.value.showArchived }),
-      userStore.fetchUsers()
-    ])
-    memberIdsDraft.value = boardStore.currentBoard?.memberIds || []
-  } catch (error) {
-    uiStore.addToast('error', error.message || 'Failed to load board')
-    router.push('/dashboard')
+const selectedTaskAttachments = computed(() => {
+  if (!selectedTask.value?._id) return []
+  return boardStore.attachmentsByTask[selectedTask.value._id] || []
+})
+
+const inviteLink = computed(() => {
+  if (!boardStore.currentBoard?.inviteCode) return ''
+  return `${window.location.origin}/boards/join/${boardStore.currentBoard.inviteCode}`
+})
+
+const taskQueryParams = computed(() => {
+  const params = {
+    archived: activeTab.value === 'archived'
   }
+
+  if (filters.value.search.trim()) {
+    params.q = filters.value.search.trim()
+  }
+
+  if (filters.value.status) {
+    params.status = filters.value.status
+  }
+
+  if (filters.value.priority) {
+    params.priority = filters.value.priority
+  }
+
+  if (filters.value.assigneeId && !filters.value.myTasks) {
+    params.assigneeId = filters.value.assigneeId
+  }
+
+  if (filters.value.myTasks) {
+    params.mine = true
+  }
+
+  return params
+})
+
+const fetchBoardShell = async () => {
+  await Promise.all([boardStore.fetchBoard(route.params.id), userStore.fetchUsers()])
 }
 
-onMounted(loadBoard)
+const fetchTaskWorkspace = async () => {
+  await Promise.all([
+    boardStore.fetchTasks(route.params.id, taskQueryParams.value),
+    boardStore.fetchBoardAttachments(route.params.id)
+  ])
+}
 
-watch(
-  () => route.params.id,
-  () => {
-    loadBoard()
+const refreshCurrentView = async () => {
+  if (activeTab.value === 'activity') {
+    await Promise.all([fetchBoardShell(), boardStore.fetchBoardActivity(route.params.id)])
+    return
   }
-)
 
-watch(
-  () => filters.value.showArchived,
-  async (showArchived) => {
-    await boardStore.fetchTasks(route.params.id, { archived: showArchived })
+  await Promise.all([fetchBoardShell(), fetchTaskWorkspace()])
+}
+
+const scheduleTaskRefresh = () => {
+  if (activeTab.value === 'activity') {
+    return
   }
-)
+
+  window.clearTimeout(filterDebounceId)
+  filterDebounceId = window.setTimeout(() => {
+    fetchTaskWorkspace().catch((error) => {
+      uiStore.addToast('error', error.message || 'Failed to refresh tasks')
+    })
+  }, 250)
+}
 
 const openCreateModal = () => {
   selectedTask.value = null
@@ -236,9 +364,12 @@ const openTask = async (task) => {
   taskModalOpen.value = true
 
   try {
-    await boardStore.fetchComments(route.params.id, task._id)
+    await Promise.all([
+      boardStore.fetchComments(route.params.id, task._id),
+      boardStore.fetchTaskAttachments(route.params.id, task._id)
+    ])
   } catch (error) {
-    uiStore.addToast('error', error.message || 'Failed to load comments')
+    uiStore.addToast('error', error.message || 'Failed to load task details')
   }
 }
 
@@ -252,6 +383,7 @@ const saveTask = async (payload) => {
       uiStore.addToast('success', 'Task created successfully')
     }
 
+    await fetchTaskWorkspace()
     taskModalOpen.value = false
   } catch (error) {
     uiStore.addToast('error', error.message || 'Failed to save task')
@@ -262,8 +394,8 @@ const changeStatus = async (status) => {
   if (!selectedTask.value?._id) return
 
   try {
-    const updatedTask = await boardStore.updateTaskStatus(route.params.id, selectedTask.value._id, status)
-    selectedTask.value = updatedTask
+    selectedTask.value = await boardStore.updateTaskStatus(route.params.id, selectedTask.value._id, status)
+    await fetchTaskWorkspace()
     uiStore.addToast('success', 'Task status updated')
   } catch (error) {
     uiStore.addToast('error', error.message || 'Failed to update task status')
@@ -274,9 +406,10 @@ const toggleArchive = async (isArchived) => {
   if (!selectedTask.value?._id) return
 
   try {
-    const updatedTask = await boardStore.archiveTask(route.params.id, selectedTask.value._id, isArchived)
-    selectedTask.value = updatedTask
+    selectedTask.value = await boardStore.archiveTask(route.params.id, selectedTask.value._id, isArchived)
+    await fetchTaskWorkspace()
     uiStore.addToast('success', isArchived ? 'Task archived' : 'Task restored')
+    taskModalOpen.value = false
   } catch (error) {
     uiStore.addToast('error', error.message || 'Failed to update archive state')
   }
@@ -287,6 +420,7 @@ const deleteTask = async () => {
 
   try {
     await boardStore.deleteTask(route.params.id, selectedTask.value._id)
+    await fetchTaskWorkspace()
     uiStore.addToast('success', 'Task deleted successfully')
     taskModalOpen.value = false
     selectedTask.value = null
@@ -300,18 +434,66 @@ const addComment = async (content) => {
 
   try {
     await boardStore.addComment(route.params.id, selectedTask.value._id, content)
+    await boardStore.fetchBoardActivity(route.params.id)
   } catch (error) {
     uiStore.addToast('error', error.message || 'Failed to add comment')
   }
 }
 
-const saveMembers = async () => {
+const uploadTaskAttachment = async (file) => {
+  if (!selectedTask.value?._id || !file) return
+
   try {
-    await boardStore.saveBoardMembers(route.params.id, memberIdsDraft.value)
-    uiStore.addToast('success', 'Board members updated')
-    membersModalOpen.value = false
+    await boardStore.uploadTaskAttachment(route.params.id, selectedTask.value._id, file)
+    await boardStore.fetchBoardActivity(route.params.id)
+    uiStore.addToast('success', 'Attachment uploaded')
   } catch (error) {
-    uiStore.addToast('error', error.message || 'Failed to update members')
+    uiStore.addToast('error', error.message || 'Failed to upload attachment')
+  }
+}
+
+const handleBoardAttachmentSelect = (event) => {
+  boardAttachmentFile.value = event.target.files?.[0] || null
+}
+
+const uploadBoardAttachment = async () => {
+  if (!boardAttachmentFile.value) return
+
+  try {
+    await boardStore.uploadBoardAttachment(route.params.id, boardAttachmentFile.value)
+    await boardStore.fetchBoardActivity(route.params.id)
+    uiStore.addToast('success', 'Board file uploaded')
+    boardAttachmentFile.value = null
+    if (boardAttachmentInput.value) {
+      boardAttachmentInput.value.value = ''
+    }
+  } catch (error) {
+    uiStore.addToast('error', error.message || 'Failed to upload board file')
+  }
+}
+
+const copyInviteLink = async () => {
+  try {
+    await navigator.clipboard.writeText(inviteLink.value)
+    uiStore.addToast('success', 'Invite link copied')
+  } catch (error) {
+    uiStore.addToast('error', 'Failed to copy invite link')
+  }
+}
+
+const downloadBoardExport = async () => {
+  try {
+    const blob = await boardStore.exportBoard(route.params.id)
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${boardStore.currentBoard?.name || 'board'}-report.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    uiStore.addToast('error', error.message || 'Failed to export board')
   }
 }
 
@@ -344,12 +526,60 @@ const handleDrop = async (status) => {
 
   try {
     await boardStore.updateTaskStatus(route.params.id, draggedTask.value._id, status)
+    await fetchTaskWorkspace()
   } catch (error) {
     uiStore.addToast('error', error.message || 'Failed to move task')
   } finally {
     draggedTask.value = null
   }
 }
+
+const setActiveTab = (tab) => {
+  activeTab.value = tab
+}
+
+onMounted(async () => {
+  try {
+    await refreshCurrentView()
+  } catch (error) {
+    uiStore.addToast('error', error.message || 'Failed to load board')
+    router.push('/dashboard')
+  }
+})
+
+watch(
+  () => route.params.id,
+  async () => {
+    try {
+      await refreshCurrentView()
+    } catch (error) {
+      uiStore.addToast('error', error.message || 'Failed to load board')
+      router.push('/dashboard')
+    }
+  }
+)
+
+watch(
+  () => activeTab.value,
+  async () => {
+    try {
+      await refreshCurrentView()
+    } catch (error) {
+      uiStore.addToast('error', error.message || 'Failed to switch view')
+    }
+  }
+)
+
+watch(
+  () => JSON.stringify(filters.value),
+  () => {
+    scheduleTaskRefresh()
+  }
+)
+
+onBeforeUnmount(() => {
+  window.clearTimeout(filterDebounceId)
+})
 </script>
 
 <style scoped>
@@ -376,16 +606,37 @@ const handleDrop = async (status) => {
   margin: 0;
 }
 
-.board-header-actions {
+.board-header-actions,
+.board-tabs {
   display: flex;
   gap: var(--space-3);
   flex-wrap: wrap;
-  justify-content: flex-end;
+}
+
+.board-tabs {
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--c-bg);
+  width: fit-content;
+}
+
+.tab-chip {
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 0.625rem 1rem;
+  background: transparent;
+  color: var(--c-text-secondary);
+  font-weight: 600;
+}
+
+.tab-chip.active {
+  background: var(--c-primary);
+  color: white;
 }
 
 .board-toolbar {
   display: grid;
-  grid-template-columns: minmax(240px, 360px) auto auto;
+  grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(160px, 1fr)) auto;
   gap: var(--space-4);
   align-items: end;
 }
@@ -394,8 +645,81 @@ const handleDrop = async (status) => {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  min-height: 44px;
   font-size: var(--font-size-sm);
   color: var(--c-text-secondary);
+}
+
+.board-attachments-panel,
+.activity-panel {
+  border: 1px solid var(--c-border-light);
+  border-radius: var(--radius-lg);
+  background: var(--c-bg-surface);
+  padding: var(--space-4);
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.section-head h2 {
+  margin: 0 0 var(--space-1);
+}
+
+.upload-inline {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.attachment-list,
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.attachment-card,
+.activity-card {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  align-items: center;
+  border: 1px solid var(--c-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: var(--c-bg);
+}
+
+.attachment-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.attachment-meta,
+.assignee-pill {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--c-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.activity-card {
+  justify-content: flex-start;
+}
+
+.activity-card p {
+  margin: var(--space-1) 0;
 }
 
 .kanban-grid {
@@ -491,25 +815,39 @@ const handleDrop = async (status) => {
   font-weight: 600;
 }
 
+.invite-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .loading-wrap {
   padding: var(--space-10);
   display: flex;
   justify-content: center;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
+  .board-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .kanban-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .board-header {
+  .board-header,
+  .section-head,
+  .attachment-card,
+  .task-meta {
     flex-direction: column;
+    align-items: flex-start;
   }
 
-  .board-header-actions,
-  .board-toolbar {
+  .board-toolbar,
+  .upload-inline {
     grid-template-columns: 1fr;
     width: 100%;
   }
