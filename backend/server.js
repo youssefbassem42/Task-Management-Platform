@@ -27,6 +27,8 @@ app.use("/uploads", express.static(path.resolve(ensureUploadsDir)));
 
 connectDB();
 
+require("./scripts/cronJobs");
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/boards", boardRoutes);

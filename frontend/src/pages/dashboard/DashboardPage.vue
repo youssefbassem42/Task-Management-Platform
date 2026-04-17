@@ -54,12 +54,6 @@
     <AppModal v-model="createModalOpen" title="Create Board">
       <form class="board-form" @submit.prevent="submitBoard">
         <AppInput v-model="form.name" label="Board name" placeholder="Product launch" />
-        <AppSelect
-          v-model="form.memberIds"
-          label="Members"
-          :options="userStore.userOptions"
-          multiple
-        />
       </form>
 
       <template #footer>
@@ -85,7 +79,6 @@ const router = useRouter()
 const createModalOpen = ref(false)
 const form = reactive({
   name: '',
-  memberIds: []
 })
 
 onMounted(async () => {
@@ -109,10 +102,8 @@ const submitBoard = async () => {
   try {
     const board = await boardStore.createBoard({
       name: form.name,
-      memberIds: form.memberIds
     })
     form.name = ''
-    form.memberIds = []
     createModalOpen.value = false
     uiStore.addToast('success', 'Board created successfully')
     router.push(`/boards/${board._id}`)

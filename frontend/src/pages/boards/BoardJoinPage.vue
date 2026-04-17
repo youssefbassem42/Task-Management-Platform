@@ -18,7 +18,7 @@
       <p v-else class="text-muted">This invite link is no longer valid.</p>
 
       <template #footer>
-        <AppButton variant="ghost" @click="goBack">رفض</AppButton>
+        <AppButton variant="ghost" @click="goBack">Deny</AppButton>
         <AppButton
           v-if="board"
           :loading="joining"

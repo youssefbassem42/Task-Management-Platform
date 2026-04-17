@@ -18,9 +18,25 @@
         placeholder="••••••••" 
         :error="errors.password"
       />
+      <div class="flex items-center justify-between mt-2 mb-4">
+        <div class="text-sm">
+          <router-link to="/forgot-password" class="font-medium text-indigo-600 hover:text-indigo-500">
+            Forgot your password?
+          </router-link>
+        </div>
+      </div>
       
-      <div class="form-actions mt-4">
-        <AppButton type="submit" variant="primary" class="w-full" :loading="globalLoading">Sign in</AppButton>
+      <div class="form-actions">
+        <AppButton type="submit" variant="primary" class="w-full" :loading="globalLoading || loginLoading">Sign in</AppButton>
+      </div>
+
+      <div v-if="unverifiedEmail" class="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded text-center">
+        <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
+          Your account is not verified yet.
+        </p>
+        <AppButton @click="handleResendVerification" variant="secondary" size="sm" :loading="resendLoading" type="button">
+          Resend Verification Email
+        </AppButton>
       </div>
     </form>
     
@@ -31,15 +47,19 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useFormValidation } from '@/composables/useFormValidation'
 import { isRequired, isValidEmail, minLength } from '@/utils/validators'
 import { storeToRefs } from 'pinia'
+import authService from '@/api/authService'
 
 const form = reactive({ email: '', password: '' })
+const unverifiedEmail = ref('')
+const loginLoading = ref(false)
+const resendLoading = ref(false)
 const { errors, validate } = useFormValidation({
   email: [
     { validator: isRequired, message: 'Email is required' },
@@ -59,12 +79,35 @@ const { isLoading: globalLoading } = storeToRefs(authStore)
 const handleLogin = async () => {
   if (!validate(form)) return
   
+  unverifiedEmail.value = ''
+  loginLoading.value = true
+  
   try {
     await authStore.login(form.email, form.password)
     uiStore.addToast('success', 'Logged in successfully')
     router.push('/dashboard')
   } catch (err) {
-    uiStore.addToast('error', err.response?.data?.message || err.message || 'Login failed')
+    const errorMsg = err.message || 'Login failed'
+    if (err.status === 403 && errorMsg.includes('verify')) {
+      unverifiedEmail.value = form.email
+    }
+    uiStore.addToast('error', errorMsg)
+  } finally {
+    loginLoading.value = false
+  }
+}
+
+const handleResendVerification = async () => {
+  if (!unverifiedEmail.value) return
+  resendLoading.value = true
+  try {
+    const res = await authService.resendVerification(unverifiedEmail.value)
+    uiStore.addToast('success', res.message || 'Verification link sent!')
+    unverifiedEmail.value = ''
+  } catch (err) {
+    uiStore.addToast('error', err.message || 'Failed to resend email')
+  } finally {
+    resendLoading.value = false
   }
 }
 </script>

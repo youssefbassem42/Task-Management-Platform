@@ -10,5 +10,23 @@ export default [
     name: 'Register',
     component: () => import('@/pages/auth/RegisterPage.vue'),
     meta: { guestOnly: true, title: 'Register' }
+  },
+  {
+    path: '/verify-email',
+    name: 'VerifyEmail',
+    component: () => import('@/pages/auth/VerifyEmailPage.vue'),
+    meta: { guestOnly: true, title: 'Verify Email' }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('@/pages/auth/ForgotPasswordPage.vue'),
+    meta: { guestOnly: true, title: 'Forgot Password' }
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: () => import('@/pages/auth/ResetPasswordPage.vue'),
+    meta: { guestOnly: true, title: 'Reset Password' }
   }
 ];

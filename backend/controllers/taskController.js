@@ -10,6 +10,7 @@ const {
   ensureEnum,
   ensureObjectId,
 } = require("../utils/validators");
+const { sendTaskAssignedEmail } = require("../utils/email");
 
 const STATUS_VALUES = ["TODO", "IN_PROGRESS", "DONE"];
 const PRIORITY_VALUES = ["LOW", "MEDIUM", "HIGH"];
@@ -140,6 +141,18 @@ const createTask = asyncHandler(async (req, res) => {
     action: `created task "${task.title}"`,
     entity: "task",
   });
+
+  if (
+    task.assigneeId &&
+    task.assigneeId._id.toString() !== req.user._id.toString()
+  ) {
+    try {
+      await sendTaskAssignedEmail(task.assigneeId.email, task, req.board.name);
+    } catch (e) {
+      console.error("Failed to send task assigned email", e);
+    }
+  }
+
   res.status(201).json(serializeTask(task, req.board.ownerId, req.user._id));
 });
 
@@ -197,6 +210,18 @@ const updateTask = asyncHandler(async (req, res) => {
       action: `changed "${req.task.title || originalTitle}" status to ${req.task.status}`,
       entity: "task",
     });
+  }
+
+  if (
+    req.body.assigneeId !== undefined &&
+    req.task.assigneeId &&
+    req.task.assigneeId._id.toString() !== req.user._id.toString()
+  ) {
+    try {
+      await sendTaskAssignedEmail(req.task.assigneeId.email, req.task, req.board.name);
+    } catch (e) {
+      console.error("Failed to send task assigned email on update", e);
+    }
   }
 
   res.json(serializeTask(req.task, req.board.ownerId, req.user._id));

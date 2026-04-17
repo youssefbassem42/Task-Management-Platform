@@ -63,13 +63,13 @@ const getBoardMembers = (boardId, ownerId, memberIds) =>
 
 const createBoard = asyncHandler(async (req, res) => {
   const name = requireNonEmptyString(req.body.name, "name", 120);
-  const memberIds = await validateMemberIds(req.body.memberIds || [], req.user._id);
+  // const memberIds = await validateMemberIds(req.body.memberIds || [], req.user._id);
   const inviteCode = await generateUniqueInviteCode();
 
   const board = await Board.create({
     name,
     ownerId: req.user._id,
-    memberIds,
+    //memberIds,
     inviteCode,
   });
 

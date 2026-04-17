@@ -20,5 +20,17 @@ export default {
     return axiosClient.post('/auth/profile/avatar', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
+  },
+  verifyEmail(token) {
+    return axiosClient.get(`/auth/verify-email?token=${token}`)
+  },
+  resendVerification(email) {
+    return axiosClient.post('/auth/resend-verification', { email })
+  },
+  forgotPassword(email) {
+    return axiosClient.post('/auth/forgot-password', { email })
+  },
+  resetPassword(token, password) {
+    return axiosClient.post(`/auth/reset-password/${token}`, { password })
   }
 }
