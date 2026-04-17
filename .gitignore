@@ -3,3 +3,4 @@ backend/.env
 TODO.md
 *.md
 .codex
+backend/uploads
