@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Taskify - Verification Success</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Design System Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-tint": "#0053db",
+                    "secondary-fixed-dim": "#7ada98",
+                    "inverse-surface": "#2d3133",
+                    "surface": "#f7f9fb",
+                    "tertiary": "#784b00",
+                    "on-secondary": "#ffffff",
+                    "secondary": "#006d3a",
+                    "tertiary-container": "#996100",
+                    "primary-fixed": "#dbe1ff",
+                    "surface-container": "#eceef0",
+                    "primary": "#004ac6",
+                    "on-tertiary-fixed": "#2a1700",
+                    "on-error-container": "#93000a",
+                    "outline-variant": "#c3c6d7",
+                    "surface-variant": "#e0e3e5",
+                    "on-background": "#191c1e",
+                    "background": "#f7f9fb",
+                    "on-error": "#ffffff",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary-container": "#93f4af",
+                    "on-primary-fixed": "#00174b",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "inverse-on-surface": "#eff1f3",
+                    "outline": "#737686",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-surface-variant": "#434655",
+                    "tertiary-fixed": "#ffddb8",
+                    "on-primary": "#ffffff",
+                    "surface-container-high": "#e6e8ea",
+                    "error-container": "#ffdad6",
+                    "on-surface": "#191c1e",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "tertiary-fixed-dim": "#ffb95f",
+                    "on-primary-container": "#eeefff",
+                    "primary-container": "#2563eb",
+                    "on-tertiary-container": "#ffeedd",
+                    "secondary-fixed": "#96f7b2",
+                    "on-secondary-fixed-variant": "#00522a",
+                    "inverse-primary": "#b4c5ff",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-container": "#00723d",
+                    "surface-container-highest": "#e0e3e5",
+                    "surface-dim": "#d8dadc",
+                    "on-tertiary-fixed-variant": "#653e00",
+                    "surface-bright": "#f7f9fb",
+                    "on-secondary-fixed": "#00210d"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": [
+                            "Inter", "sans-serif"
+                    ],
+                    "body": [
+                            "Inter", "sans-serif"
+                    ],
+                    "label": [
+                            "Inter", "sans-serif"
+                    ]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        /* Base Inter font import */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface min-h-screen flex items-center justify-center relative overflow-hidden antialiased">
+<!-- Ambient Background Depth (Soft Minimalism) -->
+<div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+<div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-secondary-fixed opacity-20 blur-[100px]"></div>
+<div class="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-primary-fixed opacity-30 blur-[120px]"></div>
+</div>
+<!-- Main Content Canvas -->
+<main class="relative z-10 w-full max-w-lg px-6">
+<!-- Brand Anchor (Subtle) -->
+<div class="text-center mb-10">
+<span class="font-headline font-black text-2xl tracking-tighter text-primary">Taskify</span>
+</div>
+<!-- Success Card (Surface Container Lowest on Surface) -->
+<div class="bg-surface-container-lowest rounded-xl p-10 sm:p-14 text-center shadow-[0px_12px_32px_rgba(25,28,30,0.04)] ring-1 ring-outline-variant/15 relative overflow-hidden">
+<!-- Optional subtle inner glow for depth -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-secondary-container/30 blur-2xl rounded-full"></div>
+<!-- Iconography: The Progress Mint -->
+<div class="relative mx-auto w-24 h-24 bg-secondary-container rounded-full flex items-center justify-center mb-8 shadow-sm">
+<span class="material-symbols-outlined text-5xl text-on-secondary-container" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">
+                    check_circle
+                </span>
+</div>
+<!-- Typography Hierarchy -->
+<h1 class="font-headline text-3xl sm:text-4xl font-bold text-on-surface tracking-tight mb-4">
+                Account Verified
+            </h1>
+<p class="font-body text-lg text-on-surface-variant mb-12 max-w-xs mx-auto leading-relaxed">
+                Your account has been verified successfully. You're all set to start organizing your tasks.
+            </p>
+<!-- Primary CTA Button (Tactile Command) -->
+<a class="block w-full py-4 px-6 rounded-xl bg-gradient-to-br from-primary-container to-primary text-on-primary font-label text-base font-semibold tracking-wide hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all duration-300 ease-out shadow-sm cursor-pointer" href="#">
+                Go to Login
+            </a>
+</div>
+<!-- Footer / Meta space (Editorial Breathing Room) -->
+<div class="mt-12 text-center">
+<p class="font-label text-sm text-on-surface-variant/60">
+                Need help? <a class="text-primary hover:underline underline-offset-4" href="#">Contact Support</a>
+</p>
+</div>
+</main>
+</body></html>

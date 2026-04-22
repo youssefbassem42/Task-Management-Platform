@@ -1,170 +1,340 @@
 <template>
-  <div class="board-page">
-    <section class="board-header" v-if="boardStore.currentBoard">
-      <div>
-        <router-link class="back-link" to="/dashboard">← Back to boards</router-link>
-        <h1>{{ boardStore.currentBoard.name }}</h1>
-        <p class="text-muted">
-          {{ boardStore.currentBoard.isOwner ? 'You own this board.' : 'You are collaborating on this board.' }}
-        </p>
-      </div>
-
-      <div class="board-header-actions">
-        <AppButton v-if="boardStore.currentBoard.isOwner" variant="secondary" @click="inviteModalOpen = true">
-          Invite
-        </AppButton>
-        <AppButton v-if="boardStore.currentBoard.isOwner" variant="secondary" @click="downloadBoardExport">
-          Export Excel
-        </AppButton>
-        <AppButton v-if="boardStore.currentBoard.isOwner" @click="openCreateModal">New Task</AppButton>
-        <AppButton v-if="boardStore.currentBoard.isOwner" variant="danger" @click="confirmDeleteBoard">
-          Delete Board
-        </AppButton>
-      </div>
-    </section>
-
-    <section class="board-tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab.value"
-        type="button"
-        class="tab-chip"
-        :class="{ active: activeTab === tab.value }"
-        @click="setActiveTab(tab.value)"
-      >
-        {{ tab.label }}
-      </button>
-    </section>
-
-    <section v-if="activeTab !== 'activity'" class="board-toolbar">
-      <AppInput v-model="filters.search" label="Search" placeholder="Search title or description" />
-      <AppSelect v-model="filters.status" label="Status" :options="statusFilterOptions" />
-      <AppSelect v-model="filters.priority" label="Priority" :options="priorityFilterOptions" />
-      <AppSelect v-model="filters.assigneeId" label="Assignee" :options="assigneeFilterOptions" />
-      <label class="checkbox-row">
-        <input v-model="filters.myTasks" type="checkbox" />
-        <span>My Tasks</span>
-      </label>
-    </section>
-
-    <section v-if="activeTab !== 'activity'" class="board-attachments-panel">
-      <div class="section-head">
-        <div>
-          <h2>Board Files</h2>
-          <p class="text-muted">Shared attachments for the whole board.</p>
+  <div class="flex flex-col h-full bg-surface">
+    <!-- Board Header -->
+    <div class="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8 shrink-0 pl-2" v-if="boardStore.currentBoard">
+      <div class="flex flex-col gap-4">
+        <div class="flex items-center gap-2">
+           <router-link to="/boards" class="text-on-surface-variant hover:text-primary mb-1">
+             <span class="material-symbols-outlined ml-[-8px]">arrow_back</span>
+           </router-link>
+           <h1 class="text-[32px] leading-tight font-headline font-bold text-on-surface tracking-tight">{{ boardStore.currentBoard.name }}</h1>
         </div>
-
-        <div class="upload-inline">
-          <input ref="boardAttachmentInput" type="file" class="hidden-input" @change="handleBoardAttachmentSelect" />
-          <AppButton variant="secondary" @click="boardAttachmentInput?.click()">Choose File</AppButton>
-          <AppButton
-            :loading="boardStore.attachmentsLoading"
-            :disabled="!boardAttachmentFile"
-            @click="uploadBoardAttachment"
-          >
-            Upload
-          </AppButton>
-        </div>
-      </div>
-
-      <div v-if="boardStore.boardAttachments.length" class="attachment-list">
-        <article v-for="attachment in boardStore.boardAttachments" :key="attachment._id" class="attachment-card">
-          <div class="attachment-main">
-            <strong>{{ attachment.fileName }}</strong>
-            <div class="attachment-meta">
-              <AppAvatar :src="attachment.uploadedBy?.avatar" :name="attachment.uploadedBy?.name" size="sm" />
-              <span>{{ attachment.uploadedBy?.name || 'Unknown user' }}</span>
-              <span>{{ formatDate(attachment.createdAt, 'MMM dd, yyyy p') }}</span>
+        
+        <div class="flex items-center gap-6">
+          <div class="flex items-center gap-3">
+            <span class="text-[11px] font-label font-bold uppercase tracking-widest text-on-surface-variant">Progress</span>
+            <div class="w-32 h-2 bg-surface-container-highest rounded-full overflow-hidden">
+              <div class="h-full bg-secondary rounded-full" :style="{ width: `${boardStore.boardProgress(boardStore.currentBoard)}%` }"></div>
+            </div>
+            <span class="text-xs font-medium text-on-surface-variant">{{ boardStore.boardProgress(boardStore.currentBoard) }}%</span>
+          </div>
+          <div class="hidden sm:flex items-center">
+            <div class="flex -space-x-2">
+               <!-- Members Avatars Setup -->
+               <img v-if="userStore.users.length" :src="userStore.users[0]?.avatar" class="w-8 h-8 rounded-full ghost-border object-cover bg-surface-container-lowest" />
             </div>
           </div>
-          <a :href="attachment.fileUrl" target="_blank" rel="noreferrer">Download</a>
-        </article>
+        </div>
       </div>
-      <AppEmptyState
-        v-else
-        title="No board files yet"
-        description="Upload a shared file so everyone on the board can access it."
-      />
-    </section>
 
-    <div v-if="activeTab === 'activity'" class="activity-panel">
-      <div v-if="boardStore.activityLoading" class="loading-wrap">
+      <div class="flex flex-col items-end gap-4">
+        <div class="flex items-center gap-3">
+          <button v-if="boardStore.currentBoard.isOwner" @click="downloadBoardExport" class="px-4 py-2.5 text-sm font-semibold text-on-surface border border-outline-variant rounded-xl hover:bg-surface-variant/50 transition-colors shadow-sm bg-surface-container-lowest">
+            Export Report
+          </button>
+          <button v-if="boardStore.currentBoard.isOwner" @click="inviteModalOpen = true" class="px-4 py-2.5 text-sm font-semibold bg-primary text-on-primary rounded-xl hover:bg-primary/90 transition-colors shadow-sm flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">person_add</span> Invite
+          </button>
+          <button v-if="boardStore.currentBoard.isOwner" @click="confirmDeleteBoard" class="w-10 h-10 rounded-xl border border-error/50 text-error hover:bg-error hover:text-on-error transition-colors flex items-center justify-center bg-surface-container-lowest shadow-sm" title="Delete Board">
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+          </button>
+        </div>
+
+        <div class="flex bg-surface-container-low rounded-full p-1 border border-surface-container-highest">
+          <button v-for="tab in tabs" :key="tab.value" @click="setActiveTab(tab.value)" class="px-4 py-1.5 text-xs font-semibold rounded-full shadow-sm transition-colors capitalize" :class="activeTab === tab.value ? 'bg-surface-container-lowest text-on-surface' : 'text-on-surface-variant hover:text-on-surface'">
+            {{ tab.label }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="boardStore.currentBoard" class="mb-6 rounded-[28px] border border-white/70 bg-white/80 p-5 shadow-sm">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Board Notes</p>
+          <p class="mt-1 text-sm text-on-surface-variant">Shared notes for everyone on this board.</p>
+        </div>
+        <button
+          v-if="boardStore.currentBoard.isOwner"
+          @click="saveBoardDescription"
+          class="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-on-primary transition hover:bg-primary/90"
+        >
+          Save Notes
+        </button>
+      </div>
+      <textarea
+        v-model="boardDescriptionDraft"
+        :readonly="!boardStore.currentBoard.isOwner"
+        class="mt-4 min-h-[96px] w-full rounded-2xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary/30 focus:ring-4 focus:ring-primary/10"
+        placeholder="Add notes, links, delivery context, or reminders for all board members."
+      ></textarea>
+    </div>
+
+    <div v-if="activeTab !== 'activity'" class="mb-6 flex flex-wrap items-center gap-3 rounded-[24px] border border-white/70 bg-white/80 p-4 shadow-sm">
+      <div class="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-3 py-2 text-sm text-on-surface-variant">
+        <span class="material-symbols-outlined text-[16px]">search</span>
+        <span class="font-medium">{{ uiStore.globalSearchQuery ? `Searching: ${uiStore.globalSearchQuery}` : 'Use top search for task title/keywords' }}</span>
+      </div>
+
+      <select v-model="filters.priority" class="rounded-full border border-outline-variant/20 bg-surface-container-low px-4 py-2 text-sm text-on-surface outline-none">
+        <option value="">All priorities</option>
+        <option value="LOW">Low</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="HIGH">High</option>
+      </select>
+
+      <select v-model="filters.dueWindow" class="rounded-full border border-outline-variant/20 bg-surface-container-low px-4 py-2 text-sm text-on-surface outline-none">
+        <option value="">All due dates</option>
+        <option value="today">Due today</option>
+        <option value="this_week">Due this week</option>
+        <option value="overdue">Overdue</option>
+        <option value="no_due_date">No due date</option>
+      </select>
+
+      <label class="inline-flex items-center gap-2 rounded-full border border-outline-variant/20 bg-surface-container-low px-4 py-2 text-sm text-on-surface">
+        <input v-model="filters.myTasks" type="checkbox" class="rounded border-outline-variant/40 text-primary focus:ring-primary/20" />
+        Assigned to me
+      </label>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex gap-6 overflow-hidden relative">
+      
+      <!-- Loading Board State -->
+      <div v-if="boardStore.boardLoading && !boardStore.tasks.length" class="flex items-center justify-center w-full h-full">
         <AppSpinner size="3rem" />
       </div>
 
-      <div v-else-if="boardStore.activity.length" class="activity-list">
-        <article v-for="entry in boardStore.activity" :key="entry._id" class="activity-card">
-          <AppAvatar :src="entry.userId?.avatar" :name="entry.userId?.name" size="md" />
-          <div>
-            <strong>{{ entry.userId?.name || 'Unknown user' }}</strong>
-            <p>{{ entry.action }}</p>
-            <span class="text-muted">{{ formatDate(entry.createdAt, 'MMM dd, yyyy p') }}</span>
-          </div>
-        </article>
-      </div>
-      <AppEmptyState
-        v-else
-        title="No activity yet"
-        description="Task changes, comments, and joins will show up here."
-      />
-    </div>
-
-    <div v-else-if="boardStore.boardLoading && !boardStore.tasks.length" class="loading-wrap">
-      <AppSpinner size="3rem" />
-    </div>
-
-    <div v-else class="kanban-grid">
-      <section
-        v-for="column in columns"
-        :key="column.value"
-        class="kanban-column"
-        @dragover.prevent
-        @drop="handleDrop(column.value)"
-      >
-        <header class="kanban-column-header">
-          <div>
-            <h2>{{ column.label }}</h2>
-            <span>{{ groupedTasks[column.value].length }}</span>
-          </div>
-        </header>
-
-        <div v-if="groupedTasks[column.value].length" class="kanban-cards">
-          <article
-            v-for="task in groupedTasks[column.value]"
-            :key="task._id"
-            class="task-card"
-            :class="{ overdue: task.isOverdue }"
-            :draggable="!task.isArchived"
-            @dragstart="handleDragStart(task)"
-            @click="openTask(task)"
-          >
-            <div class="task-card-top">
-              <AppBadge :text="task.priority" />
-              <span v-if="task.isArchived" class="task-state">Archived</span>
-              <span v-else-if="task.isOverdue" class="task-state overdue-label">Overdue</span>
-            </div>
-
-            <h3>{{ task.title }}</h3>
-            <p class="task-description">{{ task.description || 'No description' }}</p>
-
-            <div class="task-meta">
-              <div class="assignee-pill">
-                <AppAvatar :src="task.assigneeId?.avatar" :name="task.assigneeId?.name" size="sm" />
-                <span>{{ task.assigneeId?.name || 'Unassigned' }}</span>
-              </div>
-              <span>{{ task.dueDate ? formatDate(task.dueDate) : 'No due date' }}</span>
-            </div>
+      <!-- Activity Tab -->
+      <div v-else-if="activeTab === 'activity'" class="flex-1 overflow-y-auto w-full bg-surface-container-lowest p-6 rounded-2xl">
+        <div class="flex flex-col gap-3">
+          <AppEmptyState v-if="!boardStore.activity.length" title="No activity yet" description="Task changes, comments, and joins will show up here." />
+          <article v-else v-for="entry in boardStore.activity" :key="entry._id" class="flex items-start gap-4 p-4 rounded-xl bg-surface-container-low">
+             <div class="w-8 h-8 rounded-full overflow-hidden bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs uppercase">
+               <img v-if="entry.userId?.avatar" :src="entry.userId.avatar" :alt="entry.userId?.name || 'Activity user'" class="w-full h-full object-cover" />
+               <span v-else>{{ entry.userId?.name?.charAt(0) || 'U' }}</span>
+             </div>
+             <div>
+               <strong class="text-on-surface text-sm">{{ entry.userId?.name || 'Unknown user' }}</strong>
+               <p class="text-sm text-on-surface-variant my-1">{{ entry.action }}</p>
+               <span class="text-xs text-on-surface-variant/70">{{ formatDate(entry.createdAt, 'MMM dd, yyyy p') }}</span>
+             </div>
           </article>
         </div>
+      </div>
 
-        <AppEmptyState
-          v-else
-          :title="`No ${column.label.toLowerCase()} tasks`"
-          description="Drag a task here or create a new one."
-        />
-      </section>
+      <div v-else-if="activeTab === 'timeline'" class="flex-1 overflow-auto rounded-2xl bg-surface-container-lowest p-6">
+        <div class="min-w-[980px]">
+          <div class="grid" :style="{ gridTemplateColumns: `260px repeat(${timelineDays.length}, minmax(56px, 1fr))` }">
+            <div class="sticky left-0 z-10 bg-surface-container-lowest pb-3 pr-4 text-xs font-bold uppercase tracking-[0.18em] text-on-surface-variant">Task</div>
+            <div
+              v-for="day in timelineDays"
+              :key="day.key"
+              class="border-b border-l border-outline-variant/10 pb-3 text-center text-xs font-semibold text-on-surface-variant"
+            >
+              <div>{{ day.label }}</div>
+              <div class="mt-1 text-[11px]">{{ day.day }}</div>
+            </div>
+
+            <template v-for="task in timelineTasks" :key="task._id">
+              <div class="sticky left-0 z-10 flex items-center gap-2 border-t border-outline-variant/10 bg-surface-container-lowest py-3 pr-4">
+                <span class="text-lg">{{ task.emoji || '🗂️' }}</span>
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-semibold text-on-surface">{{ task.title }}</p>
+                  <p class="truncate text-[11px] text-on-surface-variant">{{ taskTimelineLabel(task) }}</p>
+                </div>
+              </div>
+              <div
+                class="relative border-l border-t border-outline-variant/10"
+                :style="{ gridColumn: `2 / span ${timelineDays.length}` }"
+              >
+                <div
+                  class="absolute top-1/2 h-8 -translate-y-1/2 rounded-full px-3 text-xs font-semibold text-white shadow-sm"
+                  :class="timelineBarClass(task.priority)"
+                  :style="timelineBarStyle(task)"
+                >
+                  <span class="inline-flex h-full items-center">{{ task.emoji || '•' }} {{ task.title }}</span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kanban Canvas -->
+      <div v-else class="flex-1 flex gap-6 overflow-x-auto pb-6 hide-scrollbar items-start h-full">
+        <!-- Columns -->
+        <div 
+          v-for="column in columns" 
+          :key="column.value"
+          class="flex flex-col w-[340px] shrink-0 bg-surface-container-low rounded-2xl p-3 pb-4 transition-all"
+          @dragover.prevent
+          @drop="handleDrop(column.value)"
+        >
+          <div class="flex items-center justify-between px-3 py-3 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" :class="getColumnColor(column.value)"></span>
+              <h2 class="font-headline font-bold text-on-surface tracking-wide text-sm">{{ column.label }}</h2>
+            </div>
+            <span class="bg-surface-variant text-on-surface-variant text-xs font-bold px-2 py-0.5 rounded-full">{{ groupedTasks[column.value]?.length || 0 }}</span>
+          </div>
+
+          <!-- Cards List -->
+          <div class="flex flex-col gap-3 min-h-[100px]">
+            <AppEmptyState v-if="!groupedTasks[column.value]?.length" :title="`No tasks`" description="Drag tasks here." class="opacity-50 !p-4" />
+            
+            <div 
+              v-for="task in groupedTasks[column.value]" 
+              :key="task._id"
+              :draggable="!task.isArchived"
+              @dragstart="handleDragStart(task)"
+              @click="openTask(task)"
+              style="cursor: grab"
+              class="rounded-xl p-4 flex flex-col gap-3 hover:shadow-[0px_12px_32px_rgba(25,28,30,0.06)] transition-all duration-300 group ring-1 ring-outline-variant/15 relative overflow-hidden bg-surface-container-lowest"
+            >
+              <div class="absolute top-0 left-0 w-full h-1" :class="getColumnColor(task.status)"></div>
+              <div class="flex justify-between items-start mt-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg leading-none">{{ task.emoji || '📝' }}</span>
+                  <span 
+                    class="text-[10px] font-label font-bold uppercase tracking-widest px-2.5 py-1 rounded-full w-max"
+                    :class="getPriorityClass(task.priority)"
+                  >
+                    {{ task.priority }}
+                  </span>
+                </div>
+                <button class="text-on-surface-variant opacity-0 hover:text-primary group-hover:opacity-100 transition-all"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+              </div>
+              
+              <h3 class="font-headline font-semibold text-on-surface leading-snug text-[15px]" :class="{ 'line-through text-on-surface-variant': task.status === 'DONE' }">
+                {{ task.title }}
+              </h3>
+
+              <div v-if="task.keywords?.length" class="flex flex-wrap gap-1">
+                <span v-for="keyword in task.keywords.slice(0, 3)" :key="keyword" class="rounded-full bg-primary-fixed px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-on-primary-fixed">
+                  {{ keyword }}
+                </span>
+              </div>
+
+              <div v-if="task.totalChecklistCount" class="rounded-xl bg-surface-container-low p-2.5">
+                <div class="flex items-center justify-between text-[11px] font-semibold text-on-surface-variant">
+                  <span class="inline-flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                    Subtasks
+                  </span>
+                  <span>{{ task.completedChecklistCount }}/{{ task.totalChecklistCount }}</span>
+                </div>
+                <div class="mt-2 h-2 overflow-hidden rounded-full bg-white">
+                  <div class="h-full rounded-full bg-secondary" :style="{ width: `${task.totalChecklistCount ? (task.completedChecklistCount / task.totalChecklistCount) * 100 : 0}%` }"></div>
+                </div>
+                <div class="mt-2 space-y-1">
+                  <div v-for="item in task.checklist.slice(0, 2)" :key="item._id || item.text" class="flex items-center gap-2 text-[11px] text-on-surface-variant">
+                    <span class="material-symbols-outlined text-[14px]" :class="item.completed ? 'text-secondary' : 'text-outline'">{{ item.completed ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                    <span class="truncate" :class="{ 'line-through': item.completed }">{{ item.text }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="flex items-center justify-between mt-1">
+                <div class="flex items-center gap-2">
+                  <div class="flex -space-x-1.5" v-if="task.assigneeIds?.length">
+                    <div v-for="assignee in task.assigneeIds.slice(0, 3)" :key="assignee._id" class="w-6 h-6 rounded-full ring-2 ring-surface-container-lowest bg-surface-variant overflow-hidden flex items-center justify-center text-[9px] font-bold text-on-surface uppercase">
+                      <img v-if="assignee.avatar" :src="assignee.avatar" :alt="assignee.name" class="w-full h-full object-cover" />
+                      <span v-else>{{ assignee.name?.charAt(0) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 text-on-surface-variant">
+                  <span class="text-[11px] font-medium flex items-center gap-1" :class="task.isOverdue ? 'text-error' : ''">
+                    <span class="material-symbols-outlined text-[14px]">calendar_today</span> 
+                    {{ formatDate(task.dueDate) || 'No Date' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <button @click="openCreateModal" v-if="column.value === 'TODO' && activeTab === 'active'" class="w-full py-2.5 mt-1 flex items-center justify-center gap-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-variant/40 rounded-lg transition-colors border border-dashed border-outline-variant/50">
+                <span class="material-symbols-outlined text-[18px]">add</span> Add Task
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Files Sidebar -->
+      <div v-if="activeTab !== 'activity'" class="hidden xl:flex w-80 shrink-0 bg-surface-container-low rounded-2xl p-4 flex-col gap-4 border border-outline-variant/20 overflow-y-auto h-full">
+        <div class="flex justify-between items-center">
+            <h2 class="font-headline font-bold text-on-surface text-sm">Board Files</h2>
+            <AppSpinner v-if="boardStore.attachmentsLoading" size="1rem" />
+        </div>
+        
+        <!-- Upload Area -->
+        <input ref="boardAttachmentInput" type="file" class="hidden" @change="handleBoardAttachmentSelect" />
+        <div @click="boardAttachmentInput?.click()" class="border-2 border-dashed border-outline-variant/50 rounded-xl p-6 flex flex-col items-center justify-center text-center gap-2 hover:bg-surface-variant/30 transition-colors cursor-pointer bg-surface-container-lowest">
+            <span class="material-symbols-outlined text-on-surface-variant">cloud_upload</span>
+            <p class="text-xs text-on-surface-variant font-medium">Click to <span class="text-primary">upload files</span></p>
+            <p v-if="boardAttachmentFile" class="text-xs font-bold text-primary mt-2">{{ boardAttachmentFile.name }} (Ready to upload)</p>
+        </div>
+        <button v-if="boardAttachmentFile" @click="uploadBoardAttachment" class="w-full py-2 bg-primary text-on-primary rounded-lg text-xs font-bold hover:opacity-90">Confirm Upload</button>
+
+        <!-- File List -->
+        <div class="flex flex-col gap-2">
+            <AppEmptyState v-if="!boardStore.boardAttachments.length" title="No files" class="!px-0 !py-4" />
+            <div 
+              v-for="attachment in boardStore.boardAttachments" 
+              :key="attachment._id"
+              class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-lg ghost-border"
+            >
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded bg-primary-container flex items-center justify-center text-primary"><span class="material-symbols-outlined text-[18px]">description</span></div>
+                    <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-on-surface truncate w-32" :title="attachment.fileName">{{ attachment.fileName }}</span>
+                        <span class="text-[10px] text-on-surface-variant">{{ formatDate(attachment.createdAt) }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1">
+                  <a :href="attachment.fileUrl" target="_blank" class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[16px]">download</span></a>
+                  <button
+                    v-if="canDeleteBoardAttachment(attachment)"
+                    @click="deleteBoardAttachment(attachment)"
+                    type="button"
+                    class="text-on-surface-variant hover:text-error transition-colors"
+                    title="Delete file"
+                  >
+                    <span class="material-symbols-outlined text-[16px]">delete</span>
+                  </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-2 rounded-2xl border border-outline-variant/15 bg-surface-container-lowest p-4">
+          <div class="mb-3 flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-on-surface">Unassigned Tasks</h3>
+              <p class="text-[11px] text-on-surface-variant">Tasks stay here until assigned, then move into workflow columns.</p>
+            </div>
+            <span class="rounded-full bg-surface-container-low px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">{{ unassignedTasks.length }}</span>
+          </div>
+          <div class="space-y-2">
+            <AppEmptyState v-if="!unassignedTasks.length" title="No unassigned tasks" class="!px-0 !py-4" />
+            <button
+              v-for="task in unassignedTasks"
+              :key="task._id"
+              @click="openTask(task)"
+              class="w-full rounded-xl border border-outline-variant/10 bg-surface-container-low p-3 text-left transition hover:border-primary/20 hover:bg-white"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <span class="truncate text-sm font-semibold text-on-surface">{{ task.emoji || '📌' }} {{ task.title }}</span>
+                <span class="rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em]" :class="getPriorityClass(task.priority)">{{ task.priority }}</span>
+              </div>
+              <p class="mt-2 text-[11px] text-on-surface-variant">{{ task.totalChecklistCount ? `${task.completedChecklistCount}/${task.totalChecklistCount} subtasks done` : 'Assign this task to place it on the board.' }}</p>
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
 
+    <!-- Modals -->
     <TaskModal
       v-model="taskModalOpen"
       :task="selectedTask"
@@ -180,17 +350,20 @@
       @delete="deleteTask"
       @comment="addComment"
       @attachment-upload="uploadTaskAttachment"
+      @attachment-delete="deleteTaskAttachment"
     />
 
     <AppModal v-model="inviteModalOpen" title="Invite people to this board">
-      <div class="invite-panel" v-if="boardStore.currentBoard">
+      <div class="invite-panel bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20" v-if="boardStore.currentBoard">
         <AppInput :model-value="inviteLink" label="Invite Link" readonly />
-        <p class="text-muted">Anyone with access to this link can request to join this board.</p>
+        <p class="text-xs text-on-surface-variant mt-2">Anyone with access to this link can request to join this board.</p>
       </div>
 
       <template #footer>
-        <AppButton variant="ghost" @click="inviteModalOpen = false">Close</AppButton>
-        <AppButton @click="copyInviteLink">Copy Link</AppButton>
+        <div class="flex justify-end gap-2 w-full mt-4">
+          <AppButton variant="ghost" @click="inviteModalOpen = false">Close</AppButton>
+          <AppButton @click="copyInviteLink" variant="primary">Copy Link</AppButton>
+        </div>
       </template>
     </AppModal>
   </div>
@@ -199,6 +372,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { addDays, differenceInCalendarDays, eachDayOfInterval, endOfDay, format, isSameDay, startOfDay } from 'date-fns'
 import { useBoardStore } from '@/stores/boardStore'
 import { useUserStore } from '@/stores/userStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -206,6 +380,11 @@ import { useUIStore } from '@/stores/uiStore'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { formatDate } from '@/utils/formatters'
 import TaskModal from '@/components/boards/TaskModal.vue'
+import AppEmptyState from '@/components/shared/AppEmptyState.vue'
+import AppSpinner from '@/components/shared/AppSpinner.vue'
+import AppModal from '@/components/shared/AppModal.vue'
+import AppInput from '@/components/shared/AppInput.vue'
+import AppButton from '@/components/shared/AppButton.vue'
 
 const columns = [
   { label: 'To Do', value: 'TODO' },
@@ -214,7 +393,8 @@ const columns = [
 ]
 
 const tabs = [
-  { label: 'Active', value: 'active' },
+  { label: 'Board', value: 'active' },
+  { label: 'Timeline', value: 'timeline' },
   { label: 'Archived', value: 'archived' },
   { label: 'Activity', value: 'activity' }
 ]
@@ -232,31 +412,30 @@ const inviteModalOpen = ref(false)
 const selectedTask = ref(null)
 const draggedTask = ref(null)
 const activeTab = ref('active')
+const boardDescriptionDraft = ref('')
 const boardAttachmentFile = ref(null)
 const boardAttachmentInput = ref(null)
 let filterDebounceId = null
 
 const filters = ref({
-  search: '',
   myTasks: false,
-  status: '',
   priority: '',
-  assigneeId: ''
+  dueWindow: ''
 })
 
-const statusFilterOptions = [
-  { value: '', label: 'All statuses' },
-  { value: 'TODO', label: 'To Do' },
-  { value: 'IN_PROGRESS', label: 'In Progress' },
-  { value: 'DONE', label: 'Done' }
-]
+const getColumnColor = (status) => {
+  if (status === 'TODO') return 'bg-primary'
+  if (status === 'IN_PROGRESS') return 'bg-tertiary-container'
+  if (status === 'DONE') return 'bg-secondary'
+  return 'bg-outline'
+}
 
-const priorityFilterOptions = [
-  { value: '', label: 'All priorities' },
-  { value: 'LOW', label: 'Low' },
-  { value: 'MEDIUM', label: 'Medium' },
-  { value: 'HIGH', label: 'High' }
-]
+const getPriorityClass = (priority) => {
+  if (priority === 'HIGH') return 'bg-error-container text-on-error-container'
+  if (priority === 'MEDIUM') return 'bg-tertiary-fixed-dim text-on-tertiary-fixed'
+  if (priority === 'LOW') return 'bg-primary-fixed text-on-primary-fixed'
+  return 'bg-surface-variant text-on-surface-variant'
+}
 
 const assignableMembers = computed(() => {
   const boardMembers = boardStore.members || []
@@ -266,17 +445,25 @@ const assignableMembers = computed(() => {
   }))
 })
 
-const assigneeFilterOptions = computed(() => [
-  { value: '', label: 'All assignees' },
-  ...assignableMembers.value
-])
-
 const groupedTasks = computed(() =>
   columns.reduce((acc, column) => {
-    acc[column.value] = boardStore.tasks.filter((task) => task.status === column.value)
+    acc[column.value] = boardStore.tasks.filter(
+      (task) => task.status === column.value && (task.assigneeIds?.length || 0) > 0
+    )
     return acc
   }, {})
 )
+const unassignedTasks = computed(() => boardStore.tasks.filter((task) => !(task.assigneeIds?.length)))
+const timelineDays = computed(() => {
+  const start = startOfDay(new Date())
+  return eachDayOfInterval({ start, end: addDays(start, 13) }).map((date) => ({
+    key: format(date, 'yyyy-MM-dd'),
+    label: format(date, 'EEE'),
+    day: format(date, 'd'),
+    date
+  }))
+})
+const timelineTasks = computed(() => boardStore.tasks.filter((task) => !task.isArchived))
 
 const selectedTaskComments = computed(() => {
   if (!selectedTask.value?._id) return []
@@ -298,24 +485,20 @@ const taskQueryParams = computed(() => {
     archived: activeTab.value === 'archived'
   }
 
-  if (filters.value.search.trim()) {
-    params.q = filters.value.search.trim()
+  if (uiStore.globalSearchQuery.trim()) {
+    params.q = uiStore.globalSearchQuery.trim()
   }
 
-  if (filters.value.status) {
-    params.status = filters.value.status
+  if (filters.value.myTasks) {
+    params.mine = true
   }
 
   if (filters.value.priority) {
     params.priority = filters.value.priority
   }
 
-  if (filters.value.assigneeId && !filters.value.myTasks) {
-    params.assigneeId = filters.value.assigneeId
-  }
-
-  if (filters.value.myTasks) {
-    params.mine = true
+  if (filters.value.dueWindow) {
+    params.dueWindow = filters.value.dueWindow
   }
 
   return params
@@ -323,6 +506,7 @@ const taskQueryParams = computed(() => {
 
 const fetchBoardShell = async () => {
   await Promise.all([boardStore.fetchBoard(route.params.id), userStore.fetchUsers()])
+  boardDescriptionDraft.value = boardStore.currentBoard?.description || ''
 }
 
 const fetchTaskWorkspace = async () => {
@@ -429,11 +613,12 @@ const deleteTask = async () => {
   }
 }
 
-const addComment = async (content) => {
+const addComment = async (payload) => {
   if (!selectedTask.value?._id) return
 
   try {
-    await boardStore.addComment(route.params.id, selectedTask.value._id, content)
+    await boardStore.addComment(route.params.id, selectedTask.value._id, payload)
+    await boardStore.fetchComments(route.params.id, selectedTask.value._id)
     await boardStore.fetchBoardActivity(route.params.id)
   } catch (error) {
     uiStore.addToast('error', error.message || 'Failed to add comment')
@@ -449,6 +634,18 @@ const uploadTaskAttachment = async (file) => {
     uiStore.addToast('success', 'Attachment uploaded')
   } catch (error) {
     uiStore.addToast('error', error.message || 'Failed to upload attachment')
+  }
+}
+
+const deleteTaskAttachment = async (attachment) => {
+  if (!selectedTask.value?._id || !attachment?._id) return
+
+  try {
+    await boardStore.deleteTaskAttachment(route.params.id, selectedTask.value._id, attachment._id)
+    await boardStore.fetchBoardActivity(route.params.id)
+    uiStore.addToast('success', 'Attachment deleted')
+  } catch (error) {
+    uiStore.addToast('error', error.message || 'Failed to delete attachment')
   }
 }
 
@@ -469,6 +666,18 @@ const uploadBoardAttachment = async () => {
     }
   } catch (error) {
     uiStore.addToast('error', error.message || 'Failed to upload board file')
+  }
+}
+
+const deleteBoardAttachment = async (attachment) => {
+  if (!attachment?._id) return
+
+  try {
+    await boardStore.deleteBoardAttachment(route.params.id, attachment._id)
+    await boardStore.fetchBoardActivity(route.params.id)
+    uiStore.addToast('success', 'Board file deleted')
+  } catch (error) {
+    uiStore.addToast('error', error.message || 'Failed to delete board file')
   }
 }
 
@@ -506,7 +715,7 @@ const confirmDeleteBoard = () => {
       try {
         await boardStore.deleteBoard(route.params.id)
         uiStore.addToast('success', 'Board deleted')
-        router.push('/dashboard')
+        router.push('/boards')
       } catch (error) {
         uiStore.addToast('error', error.message || 'Failed to delete board')
       }
@@ -538,12 +747,69 @@ const setActiveTab = (tab) => {
   activeTab.value = tab
 }
 
+const saveBoardDescription = async () => {
+  if (!boardStore.currentBoard?.isOwner) return
+
+  try {
+    await boardStore.updateBoard(route.params.id, {
+      name: boardStore.currentBoard.name,
+      description: boardDescriptionDraft.value
+    })
+    uiStore.addToast('success', 'Board notes updated')
+  } catch (error) {
+    uiStore.addToast('error', error.message || 'Failed to update board notes')
+  }
+}
+
+const canDeleteBoardAttachment = (attachment) => {
+  if (!attachment?.uploadedBy?._id || !authStore.user?._id) {
+    return boardStore.currentBoard?.isOwner
+  }
+
+  return boardStore.currentBoard?.isOwner || attachment.uploadedBy._id === authStore.user._id
+}
+
+const timelineBarClass = (priority) => {
+  if (priority === 'HIGH') return 'bg-error'
+  if (priority === 'MEDIUM') return 'bg-tertiary-container'
+  return 'bg-primary'
+}
+
+const getTaskTimelineRange = (task) => {
+  const fallbackStart = startOfDay(new Date(task.startDate || task.createdAt || Date.now()))
+  const start = startOfDay(new Date(task.startDate || task.dueDate || fallbackStart))
+  const end = endOfDay(new Date(task.dueDate || task.startDate || fallbackStart))
+  return { start, end }
+}
+
+const timelineBarStyle = (task) => {
+  const days = timelineDays.value
+  if (!days.length) return {}
+
+  const { start, end } = getTaskTimelineRange(task)
+  const gridStart = Math.max(0, differenceInCalendarDays(start, days[0].date))
+  const gridEnd = Math.min(days.length - 1, differenceInCalendarDays(end, days[0].date))
+  const span = Math.max(1, gridEnd - gridStart + 1)
+  const left = `calc(${(gridStart / days.length) * 100}% + 0.25rem)`
+  const width = `calc(${(span / days.length) * 100}% - 0.5rem)`
+
+  return {
+    left,
+    width
+  }
+}
+
+const taskTimelineLabel = (task) => {
+  const { start, end } = getTaskTimelineRange(task)
+  return isSameDay(start, end) ? format(start, 'MMM d') : `${format(start, 'MMM d')} - ${format(end, 'MMM d')}`
+}
+
 onMounted(async () => {
   try {
     await refreshCurrentView()
   } catch (error) {
     uiStore.addToast('error', error.message || 'Failed to load board')
-    router.push('/dashboard')
+    router.push('/boards')
   }
 })
 
@@ -554,7 +820,7 @@ watch(
       await refreshCurrentView()
     } catch (error) {
       uiStore.addToast('error', error.message || 'Failed to load board')
-      router.push('/dashboard')
+      router.push('/boards')
     }
   }
 )
@@ -577,279 +843,28 @@ watch(
   }
 )
 
+watch(
+  () => uiStore.globalSearchQuery,
+  () => {
+    scheduleTaskRefresh()
+  }
+)
+
 onBeforeUnmount(() => {
   window.clearTimeout(filterDebounceId)
 })
 </script>
 
 <style scoped>
-.board-page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
-.back-link {
-  display: inline-block;
-  margin-bottom: var(--space-2);
-  color: var(--c-primary);
-}
-
-.board-header {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
-  align-items: flex-start;
-}
-
-.board-header h1 {
-  margin: 0;
-}
-
-.board-header-actions,
-.board-tabs {
-  display: flex;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.board-tabs {
-  padding: var(--space-1);
-  border-radius: var(--radius-full);
-  background: var(--c-bg);
-  width: fit-content;
-}
-
-.tab-chip {
-  border: none;
-  border-radius: var(--radius-full);
-  padding: 0.625rem 1rem;
-  background: transparent;
-  color: var(--c-text-secondary);
-  font-weight: 600;
-}
-
-.tab-chip.active {
-  background: var(--c-primary);
-  color: white;
-}
-
-.board-toolbar {
-  display: grid;
-  grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(160px, 1fr)) auto;
-  gap: var(--space-4);
-  align-items: end;
-}
-
-.checkbox-row {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 44px;
-  font-size: var(--font-size-sm);
-  color: var(--c-text-secondary);
-}
-
-.board-attachments-panel,
-.activity-panel {
-  border: 1px solid var(--c-border-light);
-  border-radius: var(--radius-lg);
-  background: var(--c-bg-surface);
-  padding: var(--space-4);
-}
-
-.section-head {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
-  align-items: center;
-  margin-bottom: var(--space-4);
-}
-
-.section-head h2 {
-  margin: 0 0 var(--space-1);
-}
-
-.upload-inline {
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-}
-
-.hidden-input {
+.hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
-
-.attachment-list,
-.activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.attachment-card,
-.activity-card {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
-  align-items: center;
-  border: 1px solid var(--c-border-light);
-  border-radius: var(--radius-md);
-  padding: var(--space-3);
-  background: var(--c-bg);
-}
-
-.attachment-main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.attachment-meta,
-.assignee-pill {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--c-text-muted);
-  font-size: var(--font-size-xs);
-}
-
-.activity-card {
-  justify-content: flex-start;
-}
-
-.activity-card p {
-  margin: var(--space-1) 0;
-}
-
-.kanban-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-4);
-  align-items: start;
-}
-
-.kanban-column {
-  background: var(--c-bg);
-  border: 1px solid var(--c-border-light);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  min-height: 400px;
-}
-
-.kanban-column-header {
-  margin-bottom: var(--space-4);
-}
-
-.kanban-column-header div {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.kanban-column-header h2 {
-  margin: 0;
-  font-size: var(--font-size-lg);
-}
-
-.kanban-cards {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.task-card {
-  padding: var(--space-4);
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius-lg);
-  background: var(--c-bg-surface);
-  cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
-}
-
-.task-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--c-primary-light);
-}
-
-.task-card.overdue {
-  border-color: var(--c-danger);
-  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.15);
-}
-
-.task-card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
-}
-
-.task-card h3 {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-md);
-}
-
-.task-description {
-  margin: 0 0 var(--space-4);
-  color: var(--c-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.task-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
-  color: var(--c-text-muted);
-  font-size: var(--font-size-xs);
-}
-
-.task-state {
-  font-size: var(--font-size-xs);
-  color: var(--c-text-muted);
-}
-
-.overdue-label {
-  color: var(--c-danger);
-  font-weight: 600;
-}
-
-.invite-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.loading-wrap {
-  padding: var(--space-10);
-  display: flex;
-  justify-content: center;
-}
-
-@media (max-width: 1200px) {
-  .board-toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .kanban-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .board-header,
-  .section-head,
-  .attachment-card,
-  .task-meta {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .board-toolbar,
-  .upload-inline {
-    grid-template-columns: 1fr;
-    width: 100%;
-  }
+.ghost-border {
+  @apply ring-1 ring-outline-variant/15;
 }
 </style>

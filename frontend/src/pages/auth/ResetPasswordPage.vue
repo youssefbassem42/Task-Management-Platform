@@ -1,92 +1,112 @@
 <template>
-  <div>
-    <div class="mb-8 text-center">
-      <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">Reset Password</h2>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-        Enter your new password below.
-      </p>
+  <div class="flex flex-col relative overflow-hidden">
+    
+    <!-- Step Indicator (Optional visual parity with design) -->
+    <div class="mb-4">
+      <span class="font-label text-xs uppercase tracking-[0.05em] text-outline font-semibold">Step 2</span>
     </div>
 
-    <form @submit.prevent="handleSubmit" class="space-y-6">
-      <div v-if="successMsg" class="rounded-md bg-green-50 dark:bg-green-900/50 p-4">
-        <div class="flex">
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-green-800 dark:text-green-200">
-              {{ successMsg }}
-            </h3>
-          </div>
-        </div>
-      </div>
+    <!-- Header Text -->
+    <h2 class="text-[32px] leading-tight font-headline font-bold tracking-tight text-on-surface mb-3">Create New Password</h2>
+    <p class="font-body text-sm text-on-surface-variant leading-relaxed mb-8">
+        Your new password must be unique and adhere to our security requirements.
+    </p>
 
-      <div v-if="error" class="rounded-md bg-red-50 dark:bg-red-900/50 p-4">
-        <div class="flex">
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
-              {{ error }}
-            </h3>
-          </div>
-        </div>
-      </div>
+    <!-- Error Message -->
+    <div v-if="error" class="p-4 mb-4 bg-[#fee2e2] text-[#ef4444] rounded-xl shadow-sm">
+      <h3 class="text-sm font-medium">{{ error }}</h3>
+    </div>
 
-      <div v-if="!successMsg">
-        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          New Password
-        </label>
-        <div class="mt-1">
-          <input
-            id="password"
+    <!-- Success Message & CTA -->
+    <div v-if="successMsg" class="flex flex-col gap-4">
+        <div class="p-4 bg-secondary text-white rounded-xl shadow-sm">
+            <h3 class="text-sm font-medium">{{ successMsg }}</h3>
+        </div>
+        <router-link to="/login" class="w-full bg-gradient-to-br from-primary-container to-primary text-on-primary-container rounded-xl px-6 py-4 font-label font-medium text-base hover:brightness-110 focus:ring-[4px] focus:ring-primary/20 focus:outline-none transition-all duration-200 shadow-[0_4px_12px_rgba(37,99,235,0.2)] flex items-center justify-center gap-2">
+            Go to Login
+        </router-link>
+    </div>
+
+    <!-- Form Section -->
+    <form v-else @submit.prevent="handleSubmit" class="flex flex-col gap-6">
+
+      <!-- New Password -->
+      <div class="flex flex-col gap-2">
+        <label class="font-label text-sm font-medium text-on-surface" for="new-password">New Password</label>
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">lock</span>
+          <input 
+            id="new-password" 
             v-model="password"
-            name="password"
-            type="password"
+            @input="updatePasswordStrength"
             required
-            class="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+            class="w-full bg-surface-container-highest rounded-lg pl-12 pr-12 py-3.5 text-on-surface placeholder:text-outline border border-transparent focus:bg-surface-container-lowest focus:ring-[4px] focus:ring-primary/20 focus:border-primary/20 focus:outline-none transition-all duration-200" 
+            placeholder="••••••••" 
+            :type="showPassword ? 'text' : 'password'"
           />
+          <button @click="showPassword = !showPassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" type="button">
+            <span class="material-symbols-outlined">{{ showPassword ? 'visibility' : 'visibility_off' }}</span>
+          </button>
         </div>
       </div>
 
-      <div v-if="!successMsg">
-        <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Confirm New Password
-        </label>
-        <div class="mt-1">
-          <input
-            id="confirmPassword"
+      <!-- Password Validation Checklist -->
+      <div class="bg-surface-container-low rounded-lg p-4 flex flex-col gap-3">
+        <div class="flex items-center gap-3" :class="passwordStrength.length ? 'text-secondary' : 'text-on-surface-variant'">
+            <span class="material-symbols-outlined text-[20px]" :style="passwordStrength.length ? 'font-variation-settings: \'FILL\' 1;' : ''">{{ passwordStrength.length ? 'check_circle' : 'radio_button_unchecked' }}</span>
+            <span class="font-body text-sm" :class="passwordStrength.length ? 'text-on-surface' : ''">At least 8 characters long</span>
+        </div>
+        <div class="flex items-center gap-3" :class="passwordStrength.uppercase ? 'text-secondary' : 'text-on-surface-variant'">
+            <span class="material-symbols-outlined text-[20px]" :style="passwordStrength.uppercase ? 'font-variation-settings: \'FILL\' 1;' : ''">{{ passwordStrength.uppercase ? 'check_circle' : 'radio_button_unchecked' }}</span>
+            <span class="font-body text-sm" :class="passwordStrength.uppercase ? 'text-on-surface' : ''">Contains an uppercase letter</span>
+        </div>
+        <div class="flex items-center gap-3" :class="passwordStrength.number ? 'text-secondary' : 'text-on-surface-variant'">
+            <span class="material-symbols-outlined text-[20px]" :style="passwordStrength.number ? 'font-variation-settings: \'FILL\' 1;' : ''">{{ passwordStrength.number ? 'check_circle' : 'radio_button_unchecked' }}</span>
+            <span class="font-body text-sm" :class="passwordStrength.number ? 'text-on-surface' : ''">Contains a number</span>
+        </div>
+        <div class="flex items-center gap-3" :class="passwordStrength.special ? 'text-secondary' : 'text-on-surface-variant'">
+            <span class="material-symbols-outlined text-[20px]" :style="passwordStrength.special ? 'font-variation-settings: \'FILL\' 1;' : ''">{{ passwordStrength.special ? 'check_circle' : 'radio_button_unchecked' }}</span>
+            <span class="font-body text-sm" :class="passwordStrength.special ? 'text-on-surface' : ''">Contains a special character</span>
+        </div>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="flex flex-col gap-2">
+        <label class="font-label text-sm font-medium text-on-surface" for="confirm-password">Confirm Password</label>
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">lock_reset</span>
+          <input 
+            id="confirm-password" 
             v-model="confirmPassword"
-            name="confirmPassword"
-            type="password"
             required
-            class="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+            class="w-full bg-surface-container-highest rounded-lg pl-12 pr-4 py-3.5 text-on-surface placeholder:text-outline border border-transparent focus:bg-surface-container-lowest focus:ring-[4px] focus:ring-primary/20 focus:border-primary/20 focus:outline-none transition-all duration-200" 
+            placeholder="••••••••" 
+            type="password"
           />
         </div>
       </div>
 
-      <div v-if="!successMsg">
-        <button
-          type="submit"
-          :disabled="loading"
-          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      <div class="mt-4">
+        <button 
+            type="submit" 
+            :disabled="loading || !isPasswordValid || password !== confirmPassword"
+            class="w-full rounded-xl px-6 py-4 font-label font-medium text-base transition-all duration-200 flex items-center justify-center gap-2"
+            :class="(isPasswordValid && password === confirmPassword) ? 'bg-gradient-to-br from-primary-container to-primary text-on-primary-container hover:brightness-110 shadow-[0_4px_12px_rgba(37,99,235,0.2)]' : 'bg-surface-variant text-outline cursor-not-allowed'"
         >
-          <svg v-if="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Reset Password
+            <AppSpinner v-if="loading" size="1rem" />
+            Update Password
         </button>
       </div>
 
-      <div v-if="successMsg" class="text-center mt-4">
-        <router-link to="/login" class="inline-block px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">
-          Go to Login
-        </router-link>
-      </div>
     </form>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import authService from '@/api/authService';
+import AppSpinner from '@/components/shared/AppSpinner.vue'
 
 const route = useRoute();
 const password = ref('');
@@ -95,6 +115,24 @@ const loading = ref(false);
 const error = ref('');
 const successMsg = ref('');
 const token = ref('');
+const showPassword = ref(false);
+
+const passwordStrength = reactive({
+    length: false,
+    uppercase: false,
+    number: false,
+    special: false
+})
+
+const isPasswordValid = computed(() => passwordStrength.length && passwordStrength.uppercase && passwordStrength.number && passwordStrength.special)
+
+const updatePasswordStrength = () => {
+    const p = password.value
+    passwordStrength.length = p.length >= 8
+    passwordStrength.uppercase = /[A-Z]/.test(p)
+    passwordStrength.number = /[0-9]/.test(p)
+    passwordStrength.special = /[^A-Za-z0-9]/.test(p)
+}
 
 onMounted(() => {
   token.value = route.query.token;

@@ -1,78 +1,50 @@
 <template>
   <button
-    :class="['app-button', `variant-${variant}`, `size-${size}`, { 'is-loading': loading, 'is-disabled': disabled || loading }]"
+    :class="buttonClasses"
     :disabled="disabled || loading"
     v-bind="$attrs"
   >
-    <span v-if="loading" class="spinner"></span>
-    <span v-if="$slots.icon && !loading" class="icon-slot">
+    <span v-if="loading" class="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
+    <span v-if="$slots.icon && !loading" class="inline-flex shrink-0 items-center">
       <slot name="icon"></slot>
     </span>
-    <span class="content-slot">
+    <span class="inline-flex items-center">
       <slot></slot>
     </span>
   </button>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   variant: { type: String, default: 'primary' }, // primary, secondary, danger, ghost
   size: { type: String, default: 'md' }, // sm, md, lg
   loading: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false }
 })
+
+const buttonClasses = computed(() => {
+  const classes = [
+    'inline-flex items-center justify-center gap-2 rounded-full border font-semibold tracking-tight transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-60'
+  ]
+
+  const sizes = {
+    sm: 'px-4 py-2 text-sm',
+    md: 'px-5 py-3 text-sm',
+    lg: 'px-6 py-3.5 text-base'
+  }
+
+  const variants = {
+    primary: 'border-transparent bg-gradient-to-br from-primary-container to-primary text-on-primary shadow-[0_14px_28px_-16px_rgba(0,74,198,0.65)] hover:brightness-110 active:scale-[0.98]',
+    secondary: 'border-outline-variant/70 bg-surface-container-lowest text-on-surface hover:border-primary/30 hover:text-primary hover:bg-white',
+    danger: 'border-transparent bg-error text-on-error shadow-[0_14px_24px_-16px_rgba(186,26,26,0.6)] hover:brightness-110 active:scale-[0.98]',
+    ghost: 'border-transparent bg-transparent text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+  }
+
+  classes.push(sizes[props.size] || sizes.md)
+  classes.push(variants[props.variant] || variants.primary)
+
+  return classes.join(' ')
+})
 </script>
-
-<style scoped>
-.app-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  transition: all var(--transition-fast);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.app-button:active:not(.is-disabled) { transform: scale(0.98); }
-.app-button.is-disabled { opacity: 0.6; cursor: not-allowed; }
-
-.size-sm { padding: var(--space-1) var(--space-3); font-size: var(--font-size-sm); }
-.size-md { padding: var(--space-2) var(--space-4); font-size: var(--font-size-md); }
-.size-lg { padding: var(--space-3) var(--space-6); font-size: var(--font-size-lg); }
-
-.variant-primary {
-  background-color: var(--c-primary);
-  color: var(--c-text-inverse);
-}
-.variant-primary:hover:not(.is-disabled) { background-color: var(--c-primary-light); }
-
-.variant-secondary {
-  background-color: var(--c-secondary);
-  color: var(--c-primary-dark);
-}
-.variant-secondary:hover:not(.is-disabled) { background-color: var(--c-border); }
-
-.variant-danger {
-  background-color: var(--c-danger);
-  color: white;
-}
-.variant-danger:hover:not(.is-disabled) { background-color: #dc2626; }
-
-.variant-ghost {
-  background-color: transparent;
-  color: var(--c-text-secondary);
-}
-.variant-ghost:hover:not(.is-disabled) { background-color: var(--c-bg); color: var(--c-text-primary); }
-
-.spinner {
-  width: 1em;
-  height: 1em;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.75s linear infinite;
-}
-@keyframes spin { 100% { transform: rotate(360deg); } }
-</style>

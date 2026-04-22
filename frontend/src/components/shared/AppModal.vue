@@ -46,15 +46,18 @@ watch(() => props.modelValue, (val) => {
 .modal-backdrop {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background:
+    radial-gradient(circle at top, rgba(180, 197, 255, 0.18), transparent 28%),
+    rgba(25, 28, 30, 0.42);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(12px);
 }
 .modal-content {
-  background: var(--c-bg-surface);
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(242,244,246,0.98));
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   display: flex;
@@ -62,19 +65,28 @@ watch(() => props.modelValue, (val) => {
   max-height: 90vh;
   margin: var(--space-4);
 }
-.size-sm { width: 400px; }
-.size-md { width: 600px; }
-.size-lg { width: 800px; }
+.size-sm { width: min(420px, calc(100vw - 2rem)); }
+.size-md { width: min(640px, calc(100vw - 2rem)); }
+.size-lg { width: min(880px, calc(100vw - 2rem)); }
 .modal-header {
-  padding: var(--space-4);
-  border-bottom: 1px solid var(--c-border);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-bottom: 1px solid rgba(115, 118, 134, 0.14);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.modal-title { margin: 0; }
-.close-btn { font-size: 1.5rem; color: var(--c-text-muted); cursor: pointer; border: none; background: none; }
-.close-btn:hover { color: var(--c-text-primary); }
-.modal-body { padding: var(--space-4); overflow-y: auto; }
-.modal-footer { padding: var(--space-4); border-top: 1px solid var(--c-border); display: flex; justify-content: flex-end; gap: var(--space-4); }
+.modal-title { margin: 0; font-family: var(--font-family-display); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.03em; }
+.close-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 1.2rem;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  border: none;
+  background: rgba(255,255,255,0.65);
+  border-radius: 999px;
+}
+.close-btn:hover { color: var(--c-text-primary); background: white; }
+.modal-body { padding: 0 var(--space-5) var(--space-5); overflow-y: auto; }
+.modal-footer { padding: 0 var(--space-5) var(--space-5); display: flex; justify-content: flex-end; gap: var(--space-4); }
 </style>

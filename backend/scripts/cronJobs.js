@@ -4,7 +4,7 @@ const Board = require("../models/Board");
 const { sendTaskReminderEmail } = require("../utils/email");
 
 // Run once a day at 00:00 (Midnight) need to change to now 00:51
-cron.schedule("51 0 * * *", async () => {
+cron.schedule("0 0 * * *", async () => {
   console.log("Running task deadline reminder cron job...");
   try {
     const activeTasks = await Task.find({

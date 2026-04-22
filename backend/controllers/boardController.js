@@ -36,6 +36,7 @@ const ensureBoardInviteCode = async (board) => {
 const serializeBoard = (board, currentUserId) => ({
   _id: board._id,
   name: board.name,
+  description: board.description || "",
   ownerId: board.ownerId,
   memberIds: board.memberIds,
   inviteCode: board.inviteCode,
@@ -58,18 +59,19 @@ const validateMemberIds = async (memberIds, currentUserId) => {
   return sanitizedMemberIds;
 };
 
-const getBoardMembers = (boardId, ownerId, memberIds) =>
+const getBoardMembers = (boardId, ownerId, memberIds = []) =>
   User.find({ _id: { $in: [ownerId, ...memberIds] } }, "name email avatar").sort({ name: 1 });
 
 const createBoard = asyncHandler(async (req, res) => {
   const name = requireNonEmptyString(req.body.name, "name", 120);
-  // const memberIds = await validateMemberIds(req.body.memberIds || [], req.user._id);
+  const description = String(req.body.description || "").trim().slice(0, 2000);
   const inviteCode = await generateUniqueInviteCode();
 
   const board = await Board.create({
     name,
+    description,
     ownerId: req.user._id,
-    //memberIds,
+
     inviteCode,
   });
 
@@ -122,6 +124,22 @@ const getBoardById = asyncHandler(async (req, res) => {
   res.json({
     board: serializeBoard(req.board, req.user._id),
     members,
+  });
+});
+
+const updateBoardDetails = asyncHandler(async (req, res) => {
+  if (req.body.name !== undefined) {
+    req.board.name = requireNonEmptyString(req.body.name, "name", 120);
+  }
+
+  if (req.body.description !== undefined) {
+    req.board.description = String(req.body.description || "").trim().slice(0, 2000);
+  }
+
+  await req.board.save();
+
+  res.json({
+    board: serializeBoard(req.board, req.user._id),
   });
 });
 
@@ -295,14 +313,81 @@ const deleteBoard = asyncHandler(async (req, res) => {
   res.json({ message: "Board deleted successfully" });
 });
 
+const getDashboardStats = asyncHandler(async (req, res) => {
+  const boards = await Board.find({
+    $or: [{ ownerId: req.user._id }, { memberIds: req.user._id }],
+  });
+
+  const boardIds = boards.map((b) => b._id);
+
+  const statusAggregation = await Task.aggregate([
+    { $match: { boardId: { $in: boardIds }, isArchived: false } },
+    {
+      $group: {
+        _id: "$status",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const priorityAggregation = await Task.aggregate([
+    { $match: { boardId: { $in: boardIds }, isArchived: false } },
+    {
+      $group: {
+        _id: "$priority",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const myTasks = await Task.find({
+    boardId: { $in: boardIds },
+    assigneeId: req.user._id,
+    isArchived: false,
+  })
+    .populate("assigneeId", "name email avatar")
+    .populate("boardId", "name")
+    .sort({ dueDate: 1, priority: -1 })
+    .limit(10);
+
+  const statusBreakdown = {
+    TODO: 0,
+    IN_PROGRESS: 0,
+    DONE: 0,
+  };
+  statusAggregation.forEach((item) => {
+    statusBreakdown[item._id] = item.count;
+  });
+
+  const priorityBreakdown = {
+    LOW: 0,
+    MEDIUM: 0,
+    HIGH: 0,
+  };
+  priorityAggregation.forEach((item) => {
+    priorityBreakdown[item._id] = item.count;
+  });
+
+  res.json({
+    stats: {
+      statusBreakdown,
+      priorityBreakdown,
+      totalTasks: Object.values(statusBreakdown).reduce((a, b) => a + b, 0),
+    },
+    myTasks,
+  });
+});
+
 module.exports = {
   createBoard,
   getBoards,
   getBoardById,
+  updateBoardDetails,
   updateBoardMembers,
   getBoardInvite,
   joinBoardByInvite,
   getBoardActivity,
   exportBoard,
   deleteBoard,
+  getDashboardStats,
 };

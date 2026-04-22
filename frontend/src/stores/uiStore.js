@@ -4,6 +4,7 @@ export const useUIStore = defineStore('ui', {
   state: () => ({
     sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
     mobileDrawerOpen: false,
+    globalSearchQuery: '',
     toasts: [],
     globalLoading: false,
     toastIdCounter: 0
@@ -15,6 +16,9 @@ export const useUIStore = defineStore('ui', {
     },
     toggleMobileDrawer() {
       this.mobileDrawerOpen = !this.mobileDrawerOpen;
+    },
+    setGlobalSearchQuery(value) {
+      this.globalSearchQuery = String(value || '');
     },
     setGlobalLoading(val) {
       this.globalLoading = !!val;

@@ -16,12 +16,12 @@
         </div>
       </template>
       <div v-else class="upload-placeholder text-muted">
-        <div class="icon">📁</div>
+        <div class="icon"><span class="material-symbols-outlined">cloud_upload</span></div>
         <p>Click to upload {{ accept.includes('image') ? 'image' : 'file' }}</p>
         <span class="text-xs">Max size: {{ maxSizeMB }}MB</span>
       </div>
     </div>
-    <span v-if="error" class="error-msg">{{ error }}</span>
+    <span v-if="error || uploadError" class="error-msg">{{ error || uploadError }}</span>
   </div>
 </template>
 
@@ -58,8 +58,8 @@ const clearFile = () => {
 </script>
 
 <style scoped>
-.app-file-upload { display: flex; flex-direction: column; gap: var(--space-1); width: 100%; }
-.app-label { font-size: var(--font-size-sm); font-weight: 500; color: var(--c-text-secondary); }
+.app-file-upload { display: flex; flex-direction: column; gap: var(--space-2); width: 100%; }
+.app-label { font-size: var(--font-size-xs); font-weight: 700; color: var(--c-text-secondary); text-transform: uppercase; letter-spacing: 0.12em; }
 .hidden-input { display: none; }
 .upload-area {
   border: 2px dashed var(--c-border);
@@ -68,14 +68,14 @@ const clearFile = () => {
   text-align: center;
   cursor: pointer;
   transition: all var(--transition-fast);
-  background: var(--c-bg-surface);
+  background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(242,244,246,0.92));
   position: relative;
   overflow: hidden;
   display: flex; align-items: center; justify-content: center; min-height: 120px;
 }
-.upload-area:hover { border-color: var(--c-primary); background: var(--c-primary-alpha); }
+.upload-area:hover { border-color: rgba(37, 99, 235, 0.4); background: rgba(219, 225, 255, 0.45); }
 .upload-area.has-file { padding: 0; border-style: solid; border-color: var(--c-border-light); }
-.has-error { border-color: var(--c-danger); }
+.has-error { border-color: rgba(186, 26, 26, 0.35); background: rgba(255, 218, 214, 0.4); }
 .preview-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 .image-preview { max-width: 100%; max-height: 200px; object-fit: contain; }
 .remove-btn { 
@@ -83,7 +83,8 @@ const clearFile = () => {
   background: var(--c-danger); color: white; border: none; border-radius: 50%;
   width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
-.overlay-text { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.5); color: white; padding: var(--space-1); font-size: var(--font-size-xs); }
-.icon { font-size: var(--font-size-2xl); margin-bottom: var(--space-2); }
-.error-msg { font-size: var(--font-size-xs); color: var(--c-danger); }
+.overlay-text { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(25, 28, 30, 0.58); color: white; padding: var(--space-1); font-size: var(--font-size-xs); }
+.upload-placeholder { color: var(--c-text-secondary); }
+.icon { font-size: var(--font-size-2xl); margin-bottom: var(--space-2); display: inline-flex; justify-content: center; color: var(--c-primary); }
+.error-msg { font-size: var(--font-size-xs); color: var(--c-danger); font-weight: 600; }
 </style>

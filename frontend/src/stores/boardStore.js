@@ -72,6 +72,22 @@ export const useBoardStore = defineStore('boards', {
         this.boardLoading = false
       }
     },
+    async updateBoard(boardId, payload) {
+      this.taskMutationLoading = true
+      this.error = null
+
+      try {
+        const data = await boardService.updateBoard(boardId, payload)
+        this.currentBoard = data.board
+        this.boards = this.boards.map((board) => (board._id === boardId ? { ...board, ...data.board } : board))
+        return data.board
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.taskMutationLoading = false
+      }
+    },
     async fetchTasks(boardId, filters = {}) {
       this.boardLoading = true
       this.error = null
@@ -210,12 +226,12 @@ export const useBoardStore = defineStore('boards', {
         this.commentsLoading = false
       }
     },
-    async addComment(boardId, taskId, content) {
+    async addComment(boardId, taskId, payload) {
       this.commentsLoading = true
       this.error = null
 
       try {
-        const comment = await boardService.addComment(boardId, taskId, content)
+        const comment = await boardService.addComment(boardId, taskId, payload)
         const currentComments = this.commentsByTask[taskId] || []
         this.commentsByTask = {
           ...this.commentsByTask,
@@ -272,6 +288,20 @@ export const useBoardStore = defineStore('boards', {
         this.attachmentsLoading = false
       }
     },
+    async deleteBoardAttachment(boardId, attachmentId) {
+      this.attachmentsLoading = true
+      this.error = null
+
+      try {
+        await boardService.deleteBoardAttachment(boardId, attachmentId)
+        this.boardAttachments = this.boardAttachments.filter((attachment) => attachment._id !== attachmentId)
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.attachmentsLoading = false
+      }
+    },
     async fetchTaskAttachments(boardId, taskId) {
       this.attachmentsLoading = true
       this.error = null
@@ -302,6 +332,24 @@ export const useBoardStore = defineStore('boards', {
           [taskId]: [attachment, ...currentAttachments]
         }
         return attachment
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.attachmentsLoading = false
+      }
+    },
+    async deleteTaskAttachment(boardId, taskId, attachmentId) {
+      this.attachmentsLoading = true
+      this.error = null
+
+      try {
+        await boardService.deleteTaskAttachment(boardId, taskId, attachmentId)
+        const currentAttachments = this.attachmentsByTask[taskId] || []
+        this.attachmentsByTask = {
+          ...this.attachmentsByTask,
+          [taskId]: currentAttachments.filter((attachment) => attachment._id !== attachmentId)
+        }
       } catch (error) {
         this.error = error.message
         throw error

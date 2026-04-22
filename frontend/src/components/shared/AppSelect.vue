@@ -47,22 +47,32 @@ function handleChange(event) {
 </script>
 
 <style scoped>
-.app-select-wrapper { display: flex; flex-direction: column; gap: var(--space-1); width: 100%; }
-.app-label { font-size: var(--font-size-sm); font-weight: 500; color: var(--c-text-secondary); }
+.app-select-wrapper { display: flex; flex-direction: column; gap: var(--space-2); width: 100%; }
+.app-label { font-size: var(--font-size-xs); font-weight: 700; color: var(--c-text-secondary); text-transform: uppercase; letter-spacing: 0.12em; }
 .app-select {
   width: 100%;
-  padding: var(--space-2) var(--space-3);
+  min-height: 3rem;
+  padding: 0.875rem 1rem;
   border: 1px solid var(--c-border);
   border-radius: var(--radius-md);
-  background-color: var(--c-bg-surface);
+  background-color: var(--c-surface-container-highest);
   color: var(--c-text-primary);
   outline: none;
+  transition: all var(--transition-normal);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 .app-select.is-multiple {
   min-height: 140px;
 }
-.app-select:focus { border-color: var(--c-primary); box-shadow: 0 0 0 3px var(--c-primary-alpha); }
-.app-select.has-error { border-color: var(--c-danger); }
+.app-select:focus {
+  border-color: rgba(37, 99, 235, 0.25);
+  background-color: var(--c-surface-container-lowest);
+  box-shadow: var(--shadow-glow);
+}
+.app-select.has-error {
+  border-color: rgba(186, 26, 26, 0.35);
+  background-color: rgba(255, 218, 214, 0.7);
+}
 .app-select:disabled { opacity: 0.7; cursor: not-allowed; }
-.error-msg { font-size: var(--font-size-xs); color: var(--c-danger); }
+.error-msg { font-size: var(--font-size-xs); color: var(--c-danger); font-weight: 600; }
 </style>

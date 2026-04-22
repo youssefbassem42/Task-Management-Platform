@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Taskify - Task Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#191c1e",
+                        "primary-fixed": "#dbe1ff",
+                        "on-secondary-fixed-variant": "#00522a",
+                        "on-primary-container": "#eeefff",
+                        "surface-container-low": "#f2f4f6",
+                        "on-surface-variant": "#434655",
+                        "surface-container-high": "#e6e8ea",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#96f7b2",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#b4c5ff",
+                        "surface": "#f7f9fb",
+                        "secondary": "#006d3a",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "on-secondary-fixed": "#00210d",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "surface-tint": "#0053db",
+                        "outline-variant": "#c3c6d7",
+                        "on-primary-fixed": "#00174b",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "surface-container": "#eceef0",
+                        "secondary-container": "#93f4af",
+                        "surface-container-highest": "#e0e3e5",
+                        "tertiary-container": "#996100",
+                        "surface-dim": "#d8dadc",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#004ac6",
+                        "tertiary-fixed": "#ffddb8",
+                        "primary-container": "#2563eb",
+                        "surface-bright": "#f7f9fb",
+                        "on-secondary-container": "#00723d",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "tertiary": "#784b00",
+                        "on-tertiary-fixed": "#2a1700",
+                        "outline": "#737686",
+                        "on-secondary": "#ffffff",
+                        "background": "#f7f9fb",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#ffeedd",
+                        "on-background": "#191c1e",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "secondary-fixed-dim": "#7ada98"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "2xl": "1.25rem" // Added for 20px spec
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-screen overflow-hidden antialiased">
+<!-- Background Kanban View (Blurred/Dimmed) -->
+<div class="absolute inset-0 z-0 select-none">
+<!-- Mock Kanban Board Elements for context -->
+<div class="h-full w-full bg-surface-container-low flex flex-col blur-sm opacity-60">
+<!-- TopNavBar Shell Placeholder -->
+<header class="flex justify-between items-center w-full px-6 h-16 bg-slate-50/80 backdrop-blur-xl">
+<div class="flex items-center gap-4">
+<span class="text-xl font-bold tracking-tight text-slate-900">Taskify</span>
+<nav class="hidden md:flex gap-6 ml-8">
+<span class="text-slate-500 font-medium text-sm">Dashboard</span>
+<span class="text-blue-600 border-b-2 border-blue-600 pb-4 font-medium text-sm">Projects</span>
+<span class="text-slate-500 font-medium text-sm">Team</span>
+</nav>
+</div>
+</header>
+<!-- Board Header -->
+<div class="px-8 py-6">
+<h1 class="text-3xl font-bold">Marketing Website Redesign</h1>
+</div>
+<!-- Board Columns -->
+<div class="flex-1 flex gap-6 px-8 overflow-hidden pb-8">
+<!-- Column 1 -->
+<div class="w-80 flex flex-col bg-surface-container rounded-xl p-4">
+<h2 class="font-semibold mb-4 text-on-surface-variant uppercase text-xs tracking-wider">To Do <span class="bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full ml-2">3</span></h2>
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm mb-3">Card 1</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm mb-3 border-2 border-primary">Redesign checkout flow typography</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm">Card 3</div>
+</div>
+<!-- Column 2 -->
+<div class="w-80 flex flex-col bg-surface-container rounded-xl p-4">
+<h2 class="font-semibold mb-4 text-on-surface-variant uppercase text-xs tracking-wider">In Progress <span class="bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full ml-2">1</span></h2>
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm">Card 4</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Dark Overlay -->
+<div class="absolute inset-0 bg-inverse-surface/40 backdrop-blur-sm z-40 flex items-center justify-center p-4 sm:p-8">
+<!-- Modal Container -->
+<div class="bg-surface-container-lowest w-full max-w-5xl max-h-full rounded-2xl shadow-[0px_12px_32px_rgba(25,28,30,0.08)] flex flex-col overflow-hidden relative">
+<!-- Header Section -->
+<header class="px-8 py-6 border-b border-outline-variant/15 flex flex-col gap-4 shrink-0">
+<div class="flex items-start justify-between gap-4">
+<!-- Title Area -->
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-3">
+<span class="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                To Do
+                            </span>
+<span class="bg-error-container text-on-error-container px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase">
+                                High Priority
+                            </span>
+<span class="text-sm text-on-surface-variant ml-2 font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="folder">folder</span>
+                                Marketing Website Redesign
+                            </span>
+</div>
+<!-- Editable Title -->
+<div class="group relative inline-flex w-full items-center">
+<textarea class="w-full text-[32px] leading-tight font-bold text-on-surface bg-transparent border-transparent hover:bg-surface-container-low focus:bg-surface-container focus:ring-2 focus:ring-primary/20 rounded-lg resize-none overflow-hidden transition-colors -ml-3 px-3 py-1" rows="1" style="field-sizing: content;">Redesign checkout flow typography</textarea>
+</div>
+</div>
+<!-- Close Button -->
+<button class="text-on-surface-variant hover:bg-surface-variant hover:text-on-surface rounded-full p-2 transition-colors shrink-0">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<div class="flex flex-col lg:flex-row flex-1 overflow-hidden">
+<!-- Left Column (70%) - Scrollable -->
+<div class="w-full lg:w-[70%] overflow-y-auto px-8 py-8 border-r border-outline-variant/15">
+<!-- Description -->
+<section class="mb-10">
+<h3 class="text-lg font-semibold text-on-surface mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="description">description</span>
+                            Description
+                        </h3>
+<div class="bg-surface-container-low rounded-xl p-4 border border-outline-variant/15 hover:border-outline-variant/30 transition-colors group cursor-text min-h-[120px]">
+<p class="text-on-surface-variant text-sm leading-relaxed mb-4">
+                                The current checkout flow has legibility issues on mobile devices. We need to update the typography hierarchy to ensure clearer calls to action, better readability for terms and conditions, and a more cohesive integration with the new branding guidelines.
+                            </p>
+<div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+<button class="bg-surface-container-lowest text-on-surface-variant px-3 py-1 rounded-md text-xs font-medium shadow-sm border border-outline-variant/15">Edit Description</button>
+</div>
+</div>
+</section>
+<!-- Checklist -->
+<section class="mb-10">
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-lg font-semibold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="checklist">checklist</span>
+                                Checklist
+                            </h3>
+<button class="text-primary text-sm font-medium hover:bg-primary/5 px-3 py-1.5 rounded-lg transition-colors">Add Item</button>
+</div>
+<!-- Progress Bar -->
+<div class="flex items-center gap-3 mb-6">
+<span class="text-xs font-semibold text-on-surface-variant w-8">33%</span>
+<div class="flex-1 h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-1/3 rounded-full transition-all duration-500"></div>
+</div>
+</div>
+<!-- Items -->
+<div class="space-y-3">
+<!-- Item 1 (Done) -->
+<div class="flex items-start gap-3 group">
+<button class="mt-0.5 text-secondary shrink-0">
+<span class="material-symbols-outlined" data-icon="check_box" data-weight="fill">check_box</span>
+</button>
+<div class="flex-1 text-sm text-on-surface-variant line-through">Research font pairings for numeric inputs</div>
+<button class="text-outline hover:text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[20px]" data-icon="more_horiz">more_horiz</span></button>
+</div>
+<!-- Item 2 -->
+<div class="flex items-start gap-3 group">
+<button class="mt-0.5 text-outline hover:text-on-surface-variant shrink-0">
+<span class="material-symbols-outlined" data-icon="check_box_outline_blank">check_box_outline_blank</span>
+</button>
+<div class="flex-1 text-sm text-on-surface font-medium">Update Figma components for input fields</div>
+<button class="text-outline hover:text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[20px]" data-icon="more_horiz">more_horiz</span></button>
+</div>
+<!-- Item 3 -->
+<div class="flex items-start gap-3 group">
+<button class="mt-0.5 text-outline hover:text-on-surface-variant shrink-0">
+<span class="material-symbols-outlined" data-icon="check_box_outline_blank">check_box_outline_blank</span>
+</button>
+<div class="flex-1 text-sm text-on-surface font-medium">Accessibility check for contrast ratios (WCAG AA)</div>
+<button class="text-outline hover:text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[20px]" data-icon="more_horiz">more_horiz</span></button>
+</div>
+</div>
+</section>
+<!-- Activity / Comments -->
+<section>
+<h3 class="text-lg font-semibold text-on-surface mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="forum">forum</span>
+                            Activity
+                        </h3>
+<!-- Comment Input -->
+<div class="flex gap-4 mb-8">
+<img alt="Current user avatar" class="w-8 h-8 rounded-full object-cover shrink-0 mt-1 ring-2 ring-surface-container-lowest" data-alt="professional headshot of a person with short hair smiling softly, bright studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBXxGKqL5LbjN05GviQzOwvNA6zohnLGNwadOB-Qdv-H3VJc4oCtx2ax88dJqslcga2o2AHM3lDJQWzQdSkfWKTArMEy6EbArCWW3X3aWpQ9a7g0njAKL6o7ki8jjatDbiJC671gLZI2zPgxNuqhNgG1q1pJgAcgbfIEryaXgMYUzyCrOZVtU1zvB-sCD0WwAirXTpTuNpgsD6nGIFr2lIkxI43r2u_tcLWC-CiADJp7EyvL55Y_yj47ZUEDi8M3DAUwDsKJaau556"/>
+<div class="flex-1">
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50 transition-all shadow-sm">
+<textarea class="w-full bg-transparent border-none text-sm text-on-surface placeholder-on-surface-variant/60 focus:ring-0 p-3 min-h-[80px] resize-y rounded-t-xl" placeholder="Add a comment..."></textarea>
+<div class="flex items-center justify-between px-3 py-2 bg-surface-container-low/50 rounded-b-xl border-t border-outline-variant/15">
+<div class="flex gap-1 text-on-surface-variant">
+<button class="p-1.5 hover:bg-surface-container-high rounded-md transition-colors"><span class="material-symbols-outlined text-[20px]" data-icon="format_bold">format_bold</span></button>
+<button class="p-1.5 hover:bg-surface-container-high rounded-md transition-colors"><span class="material-symbols-outlined text-[20px]" data-icon="attach_file">attach_file</span></button>
+<button class="p-1.5 hover:bg-surface-container-high rounded-md transition-colors"><span class="material-symbols-outlined text-[20px]" data-icon="alternate_email">alternate_email</span></button>
+</div>
+<button class="bg-gradient-to-br from-primary-container to-primary text-on-primary px-4 py-1.5 rounded-full text-sm font-medium hover:brightness-110 transition-all shadow-sm">Save</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Activity Feed -->
+<div class="space-y-6">
+<!-- Comment -->
+<div class="flex gap-4">
+<img alt="Sarah Jensen" class="w-8 h-8 rounded-full object-cover shrink-0 mt-1" data-alt="portrait of a woman with dark curly hair wearing glasses, looking thoughtful, soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOoUU66V2uiOB5d0xn8G8HbnVxQf4ceDryJxb4hkJCL6CKqZFr5AnzCIZHNiQdg_lDjOT2oPL2gi6dF6d483vEuHEVr4yuFjVt4QUnyF_EV4gtSOuC08IFazwmHG7CpuAhKu3rhPYEOlrFw6rOq9kstfILIrywKBe4FSp0GlB0a7J99-BqEqeddeLKIh3yDdOjhsh9a481I4foNkbNLu8sNIi9bEtXRybv22gX5KWsFeNcCqx9Zhi-dL4z89IGEGAiiGoeJ2OnOp2O"/>
+<div>
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-semibold text-sm text-on-surface">Sarah Jensen</span>
+<span class="text-xs text-on-surface-variant">2 hours ago</span>
+</div>
+<div class="bg-surface-container-low rounded-xl rounded-tl-none p-3 text-sm text-on-surface-variant">
+                                        I've uploaded the initial Figma drafts for the mobile view. Take a look when you have a moment.
+                                    </div>
+<div class="mt-2 flex gap-3 text-xs text-on-surface-variant font-medium">
+<button class="hover:text-primary">Reply</button>
+<button class="hover:text-primary">Edit</button>
+</div>
+</div>
+</div>
+<!-- System Log -->
+<div class="flex gap-4 items-center ml-1">
+<div class="w-6 h-6 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant" data-icon="history">history</span>
+</div>
+<div class="text-sm text-on-surface-variant">
+<span class="font-semibold text-on-surface">Mark Doe</span> moved this card from <span class="font-medium">Backlog</span> to <span class="font-medium">To Do</span>
+<span class="text-xs ml-2 opacity-70">Yesterday at 4:30 PM</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column (30%) - Meta Data -->
+<div class="w-full lg:w-[30%] bg-surface-bright px-6 py-8 overflow-y-auto">
+<div class="space-y-8">
+<!-- Assignees -->
+<div>
+<h4 class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Assignees</h4>
+<div class="flex items-center gap-2 flex-wrap">
+<div class="flex -space-x-2">
+<img alt="Assignee 1" class="w-8 h-8 rounded-full ring-2 ring-surface-container-lowest object-cover z-20 hover:z-30 transition-all cursor-pointer" data-alt="professional headshot of a person with short hair smiling softly, bright studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9a5dtxm3GAQQmfATchF78XcdFtwFjJNKiNrIm9egdmOCaSUs_9hMQYyb36eVnb8rdm_vU8oG94ik3fUjFrQypU3ALc52i8eeW5dNPXM06SB7HwvOC8ymOVX2_ADF_GGgABZU_kK3_LkOWFvuBHv5sS15C153PPDvmhh8U25Uwknau_73pRDFIzHU2YDbE4GBBPw3C7mDOE0ULRJpqU7-rG0Sj7F-qOMCwvptXR61ZSjEdfKDeMzM9ymLqxDFW0YJQPD6Y75od0r9F"/>
+<img alt="Assignee 2" class="w-8 h-8 rounded-full ring-2 ring-surface-container-lowest object-cover z-10 hover:z-30 transition-all cursor-pointer" data-alt="portrait of a woman with dark curly hair wearing glasses, looking thoughtful, soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRQCgad5oLH3k46cxqrrohBVKJxIXxrtsgtTf9ifRU61T9sqdFLETXQWSMzRdPMCJlrMN6H5OryrywLEX9LVrMaY3tpPYX-Fu9Ao-mLvzgQhHVX8v7yK4SREnY1E3UYhDy5DoE-j0rI_wX11MQ1Bgvw46ldz3Zn_ziX0JeNjrkXVYDIevWcaVYxoZxlQ-d3Eg0y6tN4CbY6MXvzqHV9vWsNaIqucRlm6kPzPSdNL1mDO253I0-jjCPO5ugiq_NnQoQolcNW81la6FQ"/>
+</div>
+<button aria-label="Add assignee" class="w-8 h-8 rounded-full bg-surface-container border border-outline-variant/30 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors ml-1">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+</button>
+</div>
+</div>
+<!-- Labels -->
+<div>
+<h4 class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3 flex items-center justify-between">
+                                Labels
+                                <button class="text-outline hover:text-on-surface transition-colors p-1"><span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span></button>
+</h4>
+<div class="flex flex-wrap gap-2">
+<span class="bg-tertiary-container text-on-tertiary-container px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide">Design</span>
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide">UX</span>
+<button class="bg-surface-container text-on-surface-variant px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-surface-container-high transition-colors flex items-center gap-1 border border-outline-variant/15">
+<span class="material-symbols-outlined text-[14px]" data-icon="add">add</span> Add
+                                </button>
+</div>
+</div>
+<!-- Due Date -->
+<div>
+<h4 class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Due Date</h4>
+<button class="w-full bg-surface-container-lowest border border-outline-variant/30 hover:border-primary/50 hover:shadow-sm rounded-xl p-3 flex items-center gap-3 transition-all text-left group">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:bg-primary-fixed group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_month">calendar_month</span>
+</div>
+<div>
+<div class="text-sm font-medium text-on-surface">Oct 24, 2023</div>
+<div class="text-xs text-on-surface-variant">Next Tuesday</div>
+</div>
+</button>
+</div>
+<!-- Project Reference -->
+<div>
+<h4 class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Project</h4>
+<div class="bg-surface-container-low rounded-xl p-3 border border-outline-variant/15 flex items-center gap-3">
+<div class="w-8 h-8 rounded-md bg-gradient-to-br from-primary-container to-primary text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]" data-icon="space_dashboard">space_dashboard</span>
+</div>
+<div class="truncate">
+<div class="text-sm font-medium text-on-surface truncate">Marketing Website</div>
+<div class="text-xs text-on-surface-variant truncate">Design Team</div>
+</div>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="pt-4 border-t border-outline-variant/15 space-y-2">
+<button class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="link">link</span>
+                                Copy Link
+                            </button>
+<button class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-error hover:bg-error-container/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span>
+                                Delete Task
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

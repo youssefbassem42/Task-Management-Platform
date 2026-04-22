@@ -15,6 +15,8 @@ const {
   requireBoardOwner,
   loadTask,
 } = require("../middlewares/authMiddleware");
+const validateRequest = require("../middlewares/validateRequest");
+const { createTaskSchema, updateTaskSchema } = require("../utils/validations");
 
 const router = express.Router({ mergeParams: true });
 
@@ -23,12 +25,12 @@ router.use(loadBoard);
 router
   .route("/")
   .get(requireBoardAccess, getTasks)
-  .post(requireBoardOwner, createTask);
+  .post(requireBoardOwner, validateRequest(createTaskSchema), createTask);
 
 router
   .route("/:taskId")
   .get(requireBoardAccess, loadTask, getTaskById)
-  .put(requireBoardOwner, loadTask, updateTask)
+  .put(requireBoardOwner, loadTask, validateRequest(updateTaskSchema), updateTask)
   .delete(requireBoardOwner, loadTask, deleteTask);
 
 router.patch("/:taskId/status", requireBoardAccess, loadTask, updateTaskStatus);

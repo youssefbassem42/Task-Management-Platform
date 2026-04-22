@@ -1,6 +1,6 @@
 <template>
-  <span class="app-badge" :style="badgeStyle">
-    <slot>{{ text }}</slot>
+  <span class="app-badge text-status" :style="badgeStyle">
+    <slot>{{ resolvedText }}</slot>
   </span>
 </template>
 
@@ -12,17 +12,28 @@ const props = defineProps({
   variant: { type: String, default: 'primary' }
 })
 
+const resolvedText = computed(() => {
+  return props.text ? String(props.text).toUpperCase() : ''
+})
+
 const badgeStyle = computed(() => {
-  const map = {
-    DONE: { bg: 'var(--c-success-light)', color: 'var(--c-success)' },
-    IN_PROGRESS: { bg: 'var(--c-info-light)', color: 'var(--c-info)' },
-    TODO: { bg: 'var(--c-warning-light)', color: 'var(--c-warning)' },
-    HIGH: { bg: 'var(--c-danger-light)', color: 'var(--c-danger)' },
-    MEDIUM: { bg: 'var(--c-warning-light)', color: 'var(--c-warning)' },
-    LOW: { bg: 'var(--c-info-light)', color: 'var(--c-info)' }
+  const norm = String(props.text || props.variant).toUpperCase().replace(/_/g, ' ')
+  if (norm.includes('DONE') || norm.includes('COMPLETED')) {
+    return { backgroundColor: 'var(--c-secondary)', color: '#ffffff' } // Mint green, white text
   }
-  const match = map[props.text] || map[props.variant] || { bg: 'var(--c-border)', color: 'var(--c-text-primary)' }
-  return { backgroundColor: match.bg, color: match.color }
+  if (norm.includes('TODO') || norm.includes('TO DO')) {
+    return { backgroundColor: 'var(--c-primary-fixed)', color: 'var(--c-on-primary-fixed)' } 
+  }
+  if (norm.includes('PROGRESS') || norm.includes('IN PROGRESS')) {
+    return { backgroundColor: 'var(--c-tertiary-fixed)', color: 'var(--c-on-tertiary-fixed)' } 
+  }
+  if (norm.includes('BLOCK') || norm.includes('REVIEW')) {
+    return { backgroundColor: 'var(--c-surface-dim)', color: 'var(--c-on-surface-variant)' }
+  }
+  if (norm === 'HIGH' || norm === 'URGENT') {
+    return { backgroundColor: '#fee2e2', color: '#ef4444' }
+  }
+  return { backgroundColor: 'var(--c-surface-container-high)', color: 'var(--c-on-surface)' }
 })
 </script>
 
@@ -30,10 +41,8 @@ const badgeStyle = computed(() => {
 .app-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.125rem 0.625rem;
+  padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
   line-height: normal;
   white-space: nowrap;
 }

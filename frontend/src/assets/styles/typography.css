@@ -1,21 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap');
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-family-heading);
-  font-weight: 600;
-  color: var(--c-text-primary);
-  margin-bottom: var(--space-4);
-  line-height: 1.2;
+body {
+  font-family: var(--font-family-base);
+  color: var(--c-on-surface);
+  background-color: var(--c-surface);
+  line-height: 1.5;
 }
 
-h1 { font-size: var(--font-size-3xl); }
-h2 { font-size: var(--font-size-2xl); }
-h3 { font-size: var(--font-size-xl); }
-h4 { font-size: var(--font-size-lg); }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  color: var(--c-on-surface);
+  line-height: 1.2;
+  margin: 0;
+}
+
+h1 { font-size: var(--font-size-4xl); }
+h2 { font-size: var(--font-size-3xl); }
+h3 { font-size: var(--font-size-2xl); }
+h4 { font-size: var(--font-size-xl); }
 
 p {
   line-height: 1.5;
-  margin-bottom: var(--space-4);
+  margin: 0;
 }
 
 .text-muted {
@@ -28,12 +33,16 @@ p {
 
 .text-xs {
   font-size: var(--font-size-xs);
+  letter-spacing: 0.02em;
 }
 
-.font-medium {
-  font-weight: 500;
+.text-status {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
 }
 
-.font-semibold {
-  font-weight: 600;
-}
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }

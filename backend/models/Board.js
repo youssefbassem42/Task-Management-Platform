@@ -8,6 +8,12 @@ const boardSchema = new mongoose.Schema(
       trim: true,
       maxlength: 120,
     },
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 2000,
+    },
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

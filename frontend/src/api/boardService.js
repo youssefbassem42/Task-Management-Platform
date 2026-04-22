@@ -10,6 +10,9 @@ export default {
   getBoardById(boardId) {
     return axiosClient.get(`/boards/${boardId}`)
   },
+  updateBoard(boardId, payload) {
+    return axiosClient.put(`/boards/${boardId}`, payload)
+  },
   getBoardInvite(inviteCode) {
     return axiosClient.get(`/boards/join/${inviteCode}`)
   },
@@ -52,8 +55,8 @@ export default {
   getComments(boardId, taskId) {
     return axiosClient.get(`/boards/${boardId}/tasks/${taskId}/comments`)
   },
-  addComment(boardId, taskId, content) {
-    return axiosClient.post(`/boards/${boardId}/tasks/${taskId}/comments`, { content })
+  addComment(boardId, taskId, payload) {
+    return axiosClient.post(`/boards/${boardId}/tasks/${taskId}/comments`, payload)
   },
   getBoardAttachments(boardId) {
     return axiosClient.get(`/boards/${boardId}/attachments`)
@@ -66,6 +69,9 @@ export default {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
   },
+  deleteBoardAttachment(boardId, attachmentId) {
+    return axiosClient.delete(`/boards/${boardId}/attachments/${attachmentId}`)
+  },
   getTaskAttachments(boardId, taskId) {
     return axiosClient.get(`/boards/${boardId}/tasks/${taskId}/attachments`)
   },
@@ -76,5 +82,8 @@ export default {
     return axiosClient.post(`/boards/${boardId}/tasks/${taskId}/attachments`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
+  },
+  deleteTaskAttachment(boardId, taskId, attachmentId) {
+    return axiosClient.delete(`/boards/${boardId}/tasks/${taskId}/attachments/${attachmentId}`)
   }
 }
