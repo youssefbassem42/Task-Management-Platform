@@ -8,27 +8,10 @@
         >
           <span class="material-symbols-outlined">menu</span>
         </button>
-        <AppLogo :size="34" />
+        <AppLogo :size="40" />
       </div>
 
       <div class="flex flex-1 items-center justify-end gap-3 md:gap-4">
-        <div class="hidden min-w-[240px] max-w-[360px] flex-1 items-center rounded-full border border-white/70 bg-white/72 px-4 py-2 shadow-sm md:flex">
-          <span class="material-symbols-outlined mr-2 text-[18px] text-on-surface-variant">search</span>
-          <input
-            v-model="searchQuery"
-            class="w-full border-none bg-transparent p-0 text-sm text-on-surface outline-none placeholder:text-on-surface-variant/70 focus:ring-0"
-            placeholder="Search boards, tasks, people"
-            type="text"
-          />
-        </div>
-
-        <button class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/70 bg-white/72 text-on-surface-variant shadow-sm transition hover:text-primary">
-          <span class="material-symbols-outlined">notifications</span>
-        </button>
-        <button class="hidden h-11 w-11 items-center justify-center rounded-2xl border border-white/70 bg-white/72 text-on-surface-variant shadow-sm transition hover:text-primary sm:inline-flex">
-          <span class="material-symbols-outlined">help</span>
-        </button>
-
         <button class="flex items-center gap-3 rounded-full border border-white/70 bg-white/80 py-1.5 pl-1.5 pr-3 shadow-sm transition hover:shadow-md" @click="goToProfile">
           <div class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/70 bg-primary-container text-sm font-bold uppercase text-on-primary">
             <img

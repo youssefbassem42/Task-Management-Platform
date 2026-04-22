@@ -7,28 +7,6 @@
     class="fixed bottom-0 left-0 top-16 z-50 flex w-72 flex-col border-r border-white/60 bg-surface-container-low/85 px-4 py-5 backdrop-blur-xl transition-transform duration-300 md:translate-x-0"
     :class="uiStore.mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
   >
-    <div class="rounded-[28px] border border-white/70 bg-white/76 p-4 shadow-[0_24px_50px_-30px_rgba(0,37,102,0.55)]">
-      <div class="flex items-center gap-3">
-        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-container to-primary text-on-primary shadow-[0_14px_30px_-18px_rgba(0,74,198,0.6)]">
-          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">workspaces</span>
-        </div>
-        <div class="min-w-0">
-          <p class="truncate text-sm font-bold text-on-surface">Product Team</p>
-          <p class="truncate text-xs text-on-surface-variant">Taskify Workspace</p>
-        </div>
-      </div>
-
-      <div class="mt-4 rounded-2xl bg-surface-container-low px-3 py-3">
-        <p class="text-[10px] font-bold uppercase tracking-[0.28em] text-on-surface-variant">Workspace Health</p>
-        <div class="mt-2 flex items-end justify-between">
-          <div>
-            <p class="text-2xl font-black tracking-[-0.04em] text-on-surface">92%</p>
-            <p class="text-xs text-on-surface-variant">Completion momentum</p>
-          </div>
-          <span class="rounded-full bg-secondary-fixed px-2.5 py-1 text-[11px] font-bold text-secondary">Stable</span>
-        </div>
-      </div>
-    </div>
 
     <nav class="mt-6 flex flex-1 flex-col gap-2">
       <router-link

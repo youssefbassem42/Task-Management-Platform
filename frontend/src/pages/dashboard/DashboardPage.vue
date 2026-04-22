@@ -3,8 +3,6 @@
     <section class="rounded-[34px] border border-white/70 bg-white/80 p-7 shadow-[0_24px_50px_-30px_rgba(0,37,102,0.55)] backdrop-blur">
         <span class="inline-flex items-center rounded-full bg-primary-fixed px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-on-primary-fixed">Workspace overview</span>
         <h1 class="mt-4 font-['Sora'] text-4xl font-[700] tracking-[-0.05em] text-on-surface">Here’s what’s moving today.</h1>
-        <p class="mt-3 max-w-2xl text-sm leading-6 text-on-surface-variant">The dashboard now mirrors the `/stitch` direction with stronger cards, cleaner hierarchy, and clearer progress signals.</p>
-
         <div class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
           <article
             v-for="card in statCards"
