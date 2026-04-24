@@ -167,7 +167,7 @@
         <div 
           v-for="column in columns" 
           :key="column.value"
-          class="flex flex-col w-[340px] shrink-0 bg-surface-container-low rounded-2xl p-3 pb-4 transition-all"
+          class="flex flex-col w-[295px] shrink-0 bg-surface-container-low rounded-2xl p-3 pb-4 transition-all"
           @dragover.prevent
           @drop="handleDrop(column.value)"
         >
@@ -261,7 +261,7 @@
       </div>
 
       <!-- Files Sidebar -->
-      <div v-if="activeTab !== 'activity'" class="hidden xl:flex w-80 shrink-0 bg-surface-container-low rounded-2xl p-4 flex-col gap-4 border border-outline-variant/20 overflow-y-auto h-full">
+      <div v-if="activeTab !== 'activity'" class="hidden xl:flex w-80 shrink-0 bg-surface-container-low rounded-2xl p-4 flex-col gap-4 overflow-y-auto h-full relative z-10">
         <div class="flex justify-between items-center">
             <h2 class="font-headline font-bold text-on-surface text-sm">Board Files</h2>
             <AppSpinner v-if="boardStore.attachmentsLoading" size="1rem" />

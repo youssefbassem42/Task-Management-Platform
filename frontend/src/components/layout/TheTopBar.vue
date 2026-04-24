@@ -1,6 +1,6 @@
 <template>
   <header class="fixed inset-x-0 top-0 z-50 border-b border-white/60 bg-surface/80 backdrop-blur-xl">
-    <div class="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-4 px-4 md:px-6">
+    <div class="flex h-16 w-full items-center justify-between gap-4 px-4 md:px-6">
       <div class="flex min-w-0 items-center gap-4">
         <button
           class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/70 bg-white/70 text-on-surface shadow-sm md:hidden"

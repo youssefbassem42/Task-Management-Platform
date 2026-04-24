@@ -12,6 +12,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const { errorHandler } = require("./middlewares/errorMiddleware");
 const { ensureUploadsDir } = require("./utils/files");
+const passport = require("./utils/passport");
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(passport.initialize());
 app.use("/uploads", express.static(path.resolve(ensureUploadsDir)));
 
 connectDB();

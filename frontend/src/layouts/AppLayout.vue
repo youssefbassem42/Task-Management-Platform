@@ -5,7 +5,7 @@
     <div class="flex min-h-screen pt-16">
       <TheSidebar @createBoard="openCreateBoardModal" />
 
-      <main class="min-w-0 flex-1 px-4 pb-8 pt-6 md:ml-72 md:px-6 lg:px-8 lg:pt-8">
+      <main class="min-w-0 flex-1 px-4 pb-8 pt-6 md:px-6 lg:px-8 lg:pt-8 transition-all duration-300" :class="uiStore.sidebarCollapsed ? 'md:ml-[88px]' : 'md:ml-72'">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <div class="mx-auto max-w-7xl">
@@ -28,6 +28,9 @@ import { useAuthStore } from '@/stores/authStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import TheSidebar from '@/components/layout/TheSidebar.vue'
 import TheTopBar from '@/components/layout/TheTopBar.vue'
+import { useUIStore } from '@/stores/uiStore'
+
+const uiStore = useUIStore()
 
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()

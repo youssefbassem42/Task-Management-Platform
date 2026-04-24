@@ -100,7 +100,7 @@ const requestPasswordReset = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email: emailLower });
   if (!user) {
     // Return a succcess message to prevent email enumeration attacks
-    return res.json({ message: "If that email exists in our system, a password reset link has been sent." });
+    return res.json({ message: "A password reset link has been sent." });
   }
 
   const resetToken = crypto.randomBytes(32).toString('hex');
@@ -114,7 +114,7 @@ const requestPasswordReset = asyncHandler(async (req, res) => {
     console.error("Failed to send reset password email", e);
   }
 
-  res.json({ message: "If that email exists in our system, a password reset link has been sent." });
+  res.json({ message: "A password reset link has been sent." });
 });
 
 const resetPasswordWithToken = asyncHandler(async (req, res) => {
@@ -146,6 +146,10 @@ const loginUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email: emailLower });
   if (!user) {
     throw createHttpError(401, "Invalid credentials");
+  }
+
+  if (!user.password) {
+    throw createHttpError(401, "Please log in using your OAuth provider (Google/GitHub)");
   }
 
   const passwordMatches = await bcrypt.compare(password, user.password);
@@ -193,6 +197,10 @@ const updateProfile = asyncHandler(async (req, res) => {
     const newPassword = req.body.newPassword.trim();
     const currentPassword = req.body.currentPassword.trim();
 
+    if (!user.password) {
+      throw createHttpError(400, "Your account was created via Google/GitHub and does not have a password. Please use OAuth to log in.");
+    }
+
     const isCurrentValid = await bcrypt.compare(currentPassword, user.password);
     if (!isCurrentValid) {
       throw createHttpError(401, "Current password is incorrect");
@@ -221,6 +229,14 @@ const updateProfileAvatar = asyncHandler(async (req, res) => {
   res.json(serializeAuthUser(user));
 });
 
+const generateTokenAndRedirect = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=AuthenticationFailed`);
+  }
+  const token = generateToken(req.user._id);
+  res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
+});
+
 module.exports = {
   registerUser,
   loginUser,
@@ -230,5 +246,6 @@ module.exports = {
   verifyEmail,
   resendVerificationEmail,
   requestPasswordReset,
-  resetPasswordWithToken
+  resetPasswordWithToken,
+  generateTokenAndRedirect
 };

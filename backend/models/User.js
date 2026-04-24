@@ -17,7 +17,9 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: function() {
+        return this.authProvider === 'local';
+      },
     },
     avatar: {
       type: String,
@@ -36,6 +38,17 @@ const userSchema = new mongoose.Schema(
     },
     resetPasswordExpires: {
       type: Date,
+    },
+    googleId: {
+      type: String,
+    },
+    githubId: {
+      type: String,
+    },
+    authProvider: {
+      type: String,
+      enum: ['local', 'google', 'github'],
+      default: 'local',
     },
   },
   { timestamps: true }

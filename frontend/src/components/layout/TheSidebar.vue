@@ -4,33 +4,53 @@
   </Transition>
 
   <aside
-    class="fixed bottom-0 left-0 top-16 z-50 flex w-72 flex-col border-r border-white/60 bg-surface-container-low/85 px-4 py-5 backdrop-blur-xl transition-transform duration-300 md:translate-x-0"
-    :class="uiStore.mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
+    class="fixed bottom-0 left-0 top-16 z-50 flex flex-col border-r border-white/60 bg-surface-container-low/85 px-4 py-5 backdrop-blur-xl transition-all duration-300 md:translate-x-0"
+    :class="[
+      uiStore.mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+      uiStore.sidebarCollapsed ? 'w-[88px] items-center' : 'w-72'
+    ]"
   >
 
-    <nav class="mt-6 flex flex-1 flex-col gap-2">
+    <button
+      @click="uiStore.toggleSidebar()"
+      class="mb-6 flex h-8 w-8 items-center justify-center rounded-xl text-on-surface-variant transition hover:bg-surface-variant/50 hover:text-primary"
+      :class="uiStore.sidebarCollapsed ? '' : 'self-end'"
+      title="Toggle Sidebar"
+    >
+      <span class="material-symbols-outlined text-[20px]">{{ uiStore.sidebarCollapsed ? 'keyboard_double_arrow_right' : 'keyboard_double_arrow_left' }}</span>
+    </button>
+
+    <nav class="flex flex-1 flex-col gap-2 w-full">
       <router-link
         v-for="item in items"
         :key="item.label"
         :to="item.to"
-        class="group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition"
-        :class="isActive(item) ? 'bg-white text-primary shadow-sm shadow-primary/5' : 'text-on-surface-variant hover:bg-white/75 hover:text-primary'"
+        class="group flex items-center gap-3 rounded-2xl py-3 text-sm font-semibold transition w-full"
+        :class="[
+          isActive(item) ? 'bg-white text-primary shadow-sm shadow-primary/5' : 'text-on-surface-variant hover:bg-white/75 hover:text-primary',
+          uiStore.sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+        ]"
         @click="closeOnMobile"
+        :title="uiStore.sidebarCollapsed ? item.label : ''"
       >
-        <span class="material-symbols-outlined transition-transform duration-200 group-hover:translate-x-0.5" :style="isActive(item) ? `font-variation-settings: 'FILL' 1;` : ''">
+        <span class="material-symbols-outlined transition-transform duration-200 group-hover:scale-110" :style="isActive(item) ? `font-variation-settings: 'FILL' 1;` : ''">
           {{ item.icon }}
         </span>
-        <span>{{ item.label }}</span>
+        <span v-if="!uiStore.sidebarCollapsed">{{ item.label }}</span>
         <span
-          v-if="item.badge && item.badge() > 0"
+          v-if="!uiStore.sidebarCollapsed && item.badge && item.badge() > 0"
           class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow"
         >
           {{ item.badge() > 99 ? '99+' : item.badge() }}
         </span>
+        <span
+          v-else-if="uiStore.sidebarCollapsed && item.badge && item.badge() > 0"
+          class="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500"
+        ></span>
       </router-link>
     </nav>
 
-    <div class="rounded-[28px] border border-white/70 bg-white/78 p-4 shadow-sm">
+    <div v-if="!uiStore.sidebarCollapsed" class="rounded-[28px] border border-white/70 bg-white/78 p-4 shadow-sm w-full">
       <p class="text-sm font-semibold text-on-surface">Need a new board?</p>
       <p class="mt-1 text-xs leading-5 text-on-surface-variant">Spin up a new delivery space with the same polished UI language as the reference screens.</p>
       <button
@@ -40,14 +60,24 @@
         Create Board
       </button>
     </div>
+    <button
+      v-else
+      @click="$emit('createBoard'); closeOnMobile()"
+      class="mt-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-container to-primary text-on-primary shadow-[0_10px_20px_-10px_rgba(0,74,198,0.7)] transition hover:brightness-110 active:scale-[0.98]"
+      title="Create Board"
+    >
+      <span class="material-symbols-outlined">add</span>
+    </button>
 
     <!-- Logout button -->
     <button
       @click="handleLogout"
-      class="mt-4 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+      class="mt-4 flex items-center gap-3 rounded-2xl py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50 w-full"
+      :class="uiStore.sidebarCollapsed ? 'justify-center px-0' : 'px-4'"
+      title="Sign Out"
     >
       <span class="material-symbols-outlined text-[22px]">logout</span>
-      <span>Sign Out</span>
+      <span v-if="!uiStore.sidebarCollapsed">Sign Out</span>
     </button>
   </aside>
 </template>

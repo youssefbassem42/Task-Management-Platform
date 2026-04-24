@@ -77,7 +77,7 @@ const handleSubmit = async () => {
   
   try {
     const res = await authService.forgotPassword(email.value);
-    successMsg.value = res.message || 'If that email exists in our system, a password reset link has been sent.';
+    successMsg.value = res.message || 'A password reset link has been sent.';
   } catch (err) {
     error.value = err.message || 'Something went wrong. Please try again later.';
   } finally {

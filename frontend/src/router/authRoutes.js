@@ -28,5 +28,11 @@ export default [
     name: 'ResetPassword',
     component: () => import('@/pages/auth/ResetPasswordPage.vue'),
     meta: { guestOnly: true, title: 'Reset Password' }
+  },
+  {
+    path: '/auth/callback',
+    name: 'OAuthCallback',
+    component: () => import('@/pages/auth/OAuthCallback.vue'),
+    meta: { guestOnly: true, title: 'Authenticating...' }
   }
 ];
