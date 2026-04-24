@@ -7,7 +7,7 @@ const SENDER = {
 
 const sendEmail = async (to, subject, htmlContent) => {
   const BREVO_API_KEY = process.env.BREVO_API_KEY;
-  const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const FRONTEND_URL = process.env.FRONTEND_URL;
 
   if (!BREVO_API_KEY) {
     console.warn("BREVO_API_KEY is not set. Email not sent.");
@@ -45,7 +45,7 @@ const sendEmail = async (to, subject, htmlContent) => {
 };
 
 const sendAccountVerificationEmail = async (email, token) => {
-  const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const FRONTEND_URL = process.env.FRONTEND_URL;
   const verifyLink = `${FRONTEND_URL}/verify-email?token=${token}`;
   const htmlContent = `
     <h2>Welcome to Taskify!</h2>
@@ -57,7 +57,7 @@ const sendAccountVerificationEmail = async (email, token) => {
 };
 
 const sendPasswordResetEmail = async (email, token) => {
-  const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const FRONTEND_URL = process.env.FRONTEND_URL;
   const resetLink = `${FRONTEND_URL}/reset-password?token=${token}`;
   const htmlContent = `
     <h2>Password Reset Request</h2>
@@ -85,7 +85,7 @@ const sendTaskAssignedEmail = async (email, taskDetails, boardName) => {
 };
 
 const sendTaskReminderEmail = async (email, taskDetails, boardName, reminderType) => {
-  const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const FRONTEND_URL = process.env.FRONTEND_URL;
   let subjectPrefix = "";
   let message = "";
   if (reminderType === "TODAY") {
@@ -108,7 +108,7 @@ const sendTaskReminderEmail = async (email, taskDetails, boardName, reminderType
 };
 
 const sendNewMessageEmail = async (email, senderName, messageText, senderId) => {
-  const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const FRONTEND_URL = process.env.FRONTEND_URL;
   const preview = messageText.length > 200 ? messageText.slice(0, 200) + '…' : messageText;
   const chatLink = senderId ? `${FRONTEND_URL}/chat/${senderId}` : `${FRONTEND_URL}/chat`;
   const htmlContent = `
