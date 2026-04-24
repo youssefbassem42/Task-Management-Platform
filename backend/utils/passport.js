@@ -13,14 +13,18 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const email = profile.emails[0].value.toLowerCase();
+        const email = profile.emails?.[0]?.value?.toLowerCase();
+        if (!email) {
+          return done(new Error("No email found from Google profile"), null);
+        }
+
         let user = await User.findOne({ email });
         
         if (!user) {
           user = await User.create({
             name: profile.displayName,
             email: email,
-            avatar: profile.photos && profile.photos.length > 0 ? profile.photos[0].value : '',
+            avatar: profile.photos?.[0]?.value || '',
             isVerified: true,
             googleId: profile.id,
             authProvider: 'google'
@@ -49,18 +53,18 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        let email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null;
+        const email = profile.emails?.[0]?.value?.toLowerCase();
         if (!email) {
-          return done(new Error("No email found from GitHub"), null);
+          return done(new Error("No email found from GitHub profile"), null);
         }
-        email = email.toLowerCase();
+
         let user = await User.findOne({ email });
         
         if (!user) {
           user = await User.create({
             name: profile.displayName || profile.username,
             email: email,
-            avatar: profile.photos && profile.photos.length > 0 ? profile.photos[0].value : '',
+            avatar: profile.photos?.[0]?.value || '',
             isVerified: true,
             githubId: profile.id,
             authProvider: 'github'

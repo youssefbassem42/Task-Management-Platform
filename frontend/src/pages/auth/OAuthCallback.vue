@@ -1,6 +1,18 @@
 <template>
   <div class="flex h-screen w-full items-center justify-center bg-surface">
-    <div class="flex flex-col items-center gap-4">
+    <div v-if="!isProcessing" class="flex flex-col items-center gap-4">
+      <div class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-error/10">
+        <span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">error</span>
+      </div>
+      <p class="text-center text-on-surface font-medium">{{ errorMessage }}</p>
+      <button
+        @click="handleRetry"
+        class="mt-4 px-6 py-2 rounded-full bg-primary text-on-primary font-medium hover:brightness-110 transition-all"
+      >
+        Back to Login
+      </button>
+    </div>
+    <div v-else class="flex flex-col items-center gap-4">
       <AppSpinner size="3rem" />
       <p class="text-on-surface-variant font-medium">Authenticating...</p>
     </div>
@@ -8,7 +20,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -19,22 +31,67 @@ const router = useRouter();
 const authStore = useAuthStore();
 const uiStore = useUIStore();
 
+const isProcessing = ref(true);
+const errorMessage = ref('');
+
+const validateToken = (token) => {
+  if (!token || typeof token !== 'string') {
+    return false;
+  }
+  // JWT basic validation: should have 3 parts separated by dots
+  const parts = token.split('.');
+  return parts.length === 3 && parts.every(part => part.length > 0);
+};
+
+const handleRetry = () => {
+  router.push('/login');
+};
+
 onMounted(async () => {
-  const token = route.query.token;
-  
-  if (token) {
+  try {
+    const token = route.query.token;
+    
+    // Edge case 1: Missing token
+    if (!token) {
+      errorMessage.value = 'Authentication failed: No token received. Please try again.';
+      isProcessing.value = false;
+      uiStore.addToast('error', 'Authentication failed. No token received.');
+      return;
+    }
+
+    // Edge case 2: Invalid token format
+    if (!validateToken(token)) {
+      errorMessage.value = 'Authentication failed: Invalid token format. Please try again.';
+      isProcessing.value = false;
+      uiStore.addToast('error', 'Invalid token received.');
+      return;
+    }
+
+    // Set token before fetching profile
     authStore.setToken(token, true);
+    
+    // Edge case 3: Failed profile fetch
     try {
       await authStore.fetchProfile();
-      uiStore.addToast('success', 'Logged in successfully via OAuth');
-      router.push('/dashboard');
-    } catch (error) {
-      uiStore.addToast('error', 'Failed to fetch profile. Please try again.');
-      router.push('/login');
+    } catch (profileError) {
+      // Token might be valid but user doesn't exist or server error
+      authStore.setToken(null);
+      errorMessage.value = 'Failed to fetch profile. Please try logging in again.';
+      isProcessing.value = false;
+      uiStore.addToast('error', 'Failed to fetch profile data.');
+      return;
     }
-  } else {
-    uiStore.addToast('error', 'Authentication failed. No token received.');
-    router.push('/login');
+
+    // Success
+    uiStore.addToast('success', 'Logged in successfully via OAuth');
+    router.push('/dashboard');
+  } catch (error) {
+    // Catch-all for unexpected errors
+    console.error('OAuth callback error:', error);
+    authStore.setToken(null);
+    errorMessage.value = 'An unexpected error occurred. Please try again.';
+    isProcessing.value = false;
+    uiStore.addToast('error', error?.message || 'Authentication error.');
   }
 });
 </script>
