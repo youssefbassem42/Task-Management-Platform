@@ -1,5 +1,6 @@
 backend/node_modules
-backend/.env
+backend/.env.dev
+backend/.env.production
 TODO.md
 *.md
 .codex
