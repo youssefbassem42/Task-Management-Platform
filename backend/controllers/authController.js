@@ -229,13 +229,20 @@ const updateProfileAvatar = asyncHandler(async (req, res) => {
   res.json(serializeAuthUser(user));
 });
 
-const generateTokenAndRedirect = asyncHandler(async (req, res) => {
-  if (!req.user) {
-    return res.redirect(`${process.env.FRONTEND_URL}/login?error=AuthenticationFailed`);
+const generateTokenAndRedirect = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=AuthenticationFailed`);
+    }
+
+    const token = generateToken(req.user._id);
+
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
+  } catch (err) {
+    console.error(err);
+    res.redirect(`${process.env.FRONTEND_URL}/login?error=ServerError`);
   }
-  const token = generateToken(req.user._id);
-  res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
-});
+};
 
 module.exports = {
   registerUser,
