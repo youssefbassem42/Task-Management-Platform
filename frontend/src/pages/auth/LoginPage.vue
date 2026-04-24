@@ -145,11 +145,11 @@ onMounted(() => {
 const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
 const loginWithGoogle = () => {
-  window.location.href = `${backendUrl}/api/auth/google/callback`;
+  window.location.href = `${backendUrl}/api/auth/google`;
 }
 
 const loginWithGitHub = () => {
-  window.location.href = `${backendUrl}/api/auth/callback/github`;
+  window.location.href = `${backendUrl}/api/auth/github`;
 }
 
 const handleLogin = async () => {

@@ -42,6 +42,5 @@ router.get("/google/callback", passport.authenticate("google", { scope: ["profil
 
 router.get("/github", passport.authenticate("github", { scope: ["user:email"] }));
 router.get("/github/callback", passport.authenticate("github", { scope: ["user:email"], session: false, failureRedirect: `${process.env.FRONTEND_URL}/login?error=OAuthFailed` }), generateTokenAndRedirect);
-router.get("/callback/github", passport.authenticate("github", { scope: ["user:email"], session: false, failureRedirect: `${process.env.FRONTEND_URL}/login?error=OAuthFailed` }), generateTokenAndRedirect);
 
 module.exports = router;
