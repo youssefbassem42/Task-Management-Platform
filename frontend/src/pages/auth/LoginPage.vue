@@ -142,7 +142,7 @@ onMounted(() => {
   }
 })
 
-const backendUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:8000';
+const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
 const loginWithGoogle = () => {
   window.location.href = `${backendUrl}/api/auth/google/callback`;
