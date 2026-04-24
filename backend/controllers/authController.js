@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/User");
 const { asyncHandler, createHttpError } = require("../utils/http");
-const { requireNonEmptyString } = require("../utils/validators");
+
 const { buildFileUrl } = require("../utils/files");
 const { sendAccountVerificationEmail, sendPasswordResetEmail } = require("../utils/email");
 
@@ -19,15 +19,12 @@ const serializeAuthUser = (user) => ({
 });
 
 const registerUser = asyncHandler(async (req, res) => {
-  const name = requireNonEmptyString(req.body.name, "name", 80);
-  const email = requireNonEmptyString(req.body.email, "email", 160).toLowerCase();
-  const password = requireNonEmptyString(req.body.password, "password", 200);
+  const { name } = req.body;
+  const email = req.body.email.trim();
+  const password = req.body.password.trim();
+  const emailLower = email.toLowerCase();
 
-  if (password.length < 6) {
-    throw createHttpError(400, "Password must be at least 6 characters");
-  }
-
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email: emailLower });
   if (existingUser) {
     throw createHttpError(409, "User already exists");
   }
@@ -37,7 +34,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const user = await User.create({
     name,
-    email,
+    email: emailLower,
     password: hashedPassword,
     isVerified: false,
     verificationToken,
@@ -72,9 +69,9 @@ const verifyEmail = asyncHandler(async (req, res) => {
 });
 
 const resendVerificationEmail = asyncHandler(async (req, res) => {
-  const email = requireNonEmptyString(req.body.email, "email", 160).toLowerCase();
+  const emailLower = req.body.email.trim().toLowerCase();
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: emailLower });
   if (!user) {
     // Hide true existence
     return res.json({ message: "If your email is registered and unverified, a new link has been sent." });
@@ -98,9 +95,9 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
 });
 
 const requestPasswordReset = asyncHandler(async (req, res) => {
-  const email = requireNonEmptyString(req.body.email, "email", 160).toLowerCase();
+  const emailLower = req.body.email.trim().toLowerCase();
   
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: emailLower });
   if (!user) {
     // Return a succcess message to prevent email enumeration attacks
     return res.json({ message: "If that email exists in our system, a password reset link has been sent." });
@@ -122,11 +119,7 @@ const requestPasswordReset = asyncHandler(async (req, res) => {
 
 const resetPasswordWithToken = asyncHandler(async (req, res) => {
   const token = req.params.token || req.body.token;
-  const password = requireNonEmptyString(req.body.password, "password", 200);
-
-  if (password.length < 6) {
-    throw createHttpError(400, "Password must be at least 6 characters");
-  }
+  const password = req.body.password.trim();
 
   const user = await User.findOne({
     resetPasswordToken: token,
@@ -146,10 +139,11 @@ const resetPasswordWithToken = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  const email = requireNonEmptyString(req.body.email, "email", 160).toLowerCase();
-  const password = requireNonEmptyString(req.body.password, "password", 200);
+  const email = req.body.email.trim();
+  const password = req.body.password.trim();
+  const emailLower = email.toLowerCase();
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: emailLower });
   if (!user) {
     throw createHttpError(401, "Invalid credentials");
   }
@@ -182,26 +176,29 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   if (req.body.name !== undefined) {
-    user.name = requireNonEmptyString(req.body.name, "name", 80);
+    user.name = req.body.name;
   }
 
   if (req.body.email !== undefined) {
-    const email = requireNonEmptyString(req.body.email, "email", 160).toLowerCase();
-    const existingUser = await User.findOne({ email, _id: { $ne: user._id } });
+    const emailLower = req.body.email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: emailLower, _id: { $ne: user._id } });
     if (existingUser) {
       throw createHttpError(409, "Email is already in use");
     }
 
-    user.email = email;
+    user.email = emailLower;
   }
 
-  if (req.body.password !== undefined && req.body.password !== "") {
-    const password = requireNonEmptyString(req.body.password, "password", 200);
-    if (password.length < 6) {
-      throw createHttpError(400, "Password must be at least 6 characters");
+  if (req.body.newPassword !== undefined && req.body.newPassword !== "") {
+    const newPassword = req.body.newPassword.trim();
+    const currentPassword = req.body.currentPassword.trim();
+
+    const isCurrentValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentValid) {
+      throw createHttpError(401, "Current password is incorrect");
     }
 
-    user.password = await bcrypt.hash(password, 10);
+    user.password = await bcrypt.hash(newPassword, 10);
   }
 
   await user.save();

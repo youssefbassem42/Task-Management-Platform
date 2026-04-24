@@ -91,7 +91,7 @@
                         <input
                           v-model="draft.assigneeIds"
                           :value="member.value"
-                          :disabled="isReadOnly"
+                          :disabled="isReadOnly || !isOwner"
                           type="checkbox"
                           class="rounded border-outline-variant/40 text-primary focus:ring-primary/20"
                         />
@@ -326,7 +326,7 @@
                   <button @click="$emit('archive', !draft.isArchived)" class="px-4 py-2 text-sm font-semibold border border-outline-variant/50 text-on-surface rounded-xl hover:bg-surface-container-low transition-colors shadow-sm">
                       {{ draft.isArchived ? 'Restore Task' : 'Archive Task' }}
                   </button>
-                  <button @click="$emit('delete')" class="px-4 py-2 text-sm font-semibold bg-error-container text-on-error-container rounded-xl hover:bg-error hover:text-on-error transition-colors shadow-sm">
+                  <button v-if="isOwner" @click="$emit('delete')" class="px-4 py-2 text-sm font-semibold bg-error-container text-on-error-container rounded-xl hover:bg-error hover:text-on-error transition-colors shadow-sm">
                       Delete Task
                   </button>
               </div>
@@ -406,12 +406,16 @@ const attachmentFile = ref(null)
 const attachmentInput = ref(null)
 const titleTextarea = ref(null)
 
-const canManage = computed(() => Boolean(props.board?.isOwner))
+const canManage = computed(() => {
+  if (props.task) return Boolean(props.task.canManage)
+  return Boolean(props.board?.isOwner)
+})
+const isOwner = computed(() => Boolean(props.board?.isOwner))
 const isReadOnly = computed(() => Boolean(props.task && !canManage.value))
 const topLevelComments = computed(() => props.comments.filter((comment) => !comment.parentCommentId))
 
 const hasChanges = computed(() => {
-    if (!props.task) return true; // new task has changes by default
+    if (!props.task) return true;
     return (
         draft.title !== props.task.title ||
         draft.description !== props.task.description ||

@@ -7,7 +7,7 @@ const axiosClient = axios.create({
 })
 
 axiosClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('taskmanager_token')
+  const token = localStorage.getItem('taskmanager_token') || sessionStorage.getItem('taskmanager_token')
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -37,6 +37,7 @@ axiosClient.interceptors.response.use(
 
     if (error.response.status === 401) {
       localStorage.removeItem('taskmanager_token')
+      sessionStorage.removeItem('taskmanager_token')
     }
 
     return Promise.reject(normalizedError)

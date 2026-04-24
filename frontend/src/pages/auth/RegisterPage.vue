@@ -102,10 +102,10 @@
 
       <button 
         type="submit" 
-        :disabled="globalLoading"
+        :disabled="registerLoading"
         class="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-primary-container to-primary py-3.5 font-medium tracking-wide text-on-primary shadow-[0_20px_40px_-24px_rgba(0,74,198,0.8)] transition-all duration-200 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
       >
-        <AppSpinner v-if="globalLoading" size="1rem" />
+        <AppSpinner v-if="registerLoading" size="1rem" />
         Create Account
       </button>
     </form>
@@ -126,10 +126,12 @@ import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useFormValidation } from '@/composables/useFormValidation'
 import { isRequired, isValidEmail, minLength } from '@/utils/validators'
+import authService from '@/api/authService'
 import AppSpinner from '@/components/shared/AppSpinner.vue'
 
 const form = reactive({ name: '', email: '', password: '' })
 const showPassword = ref(false)
+const registerLoading = ref(false)
 const passwordStrength = reactive({
     length: false,
     uppercase: false,
@@ -170,12 +172,15 @@ const updatePasswordStrength = () => {
 const handleRegister = async () => {
   if (!validate(form)) return
 
+  registerLoading.value = true
   try {
-    await authStore.register(form)
-    uiStore.addToast('success', 'Account created successfully')
-    router.push('/dashboard')
+    const data = await authService.register(form)
+    uiStore.addToast('success', data.message || 'Registration successful! Please check your email to verify your account.')
+    router.push('/login')
   } catch (err) {
     uiStore.addToast('error', err.message || 'Registration failed')
+  } finally {
+    registerLoading.value = false
   }
 }
 </script>

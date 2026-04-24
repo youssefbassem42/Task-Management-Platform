@@ -1,5 +1,6 @@
 const Comment = require("../models/Comment");
 const FileAttachment = require("../models/FileAttachment");
+const Notification = require("../models/Notification");
 const Task = require("../models/Task");
 const User = require("../models/User");
 const { asyncHandler, createHttpError } = require("../utils/http");
@@ -82,7 +83,9 @@ const serializeTask = (task, boardOwnerId, currentUserId) => {
     totalChecklistCount: checklist.length,
     keywords: Array.isArray(taskObject.keywords) ? taskObject.keywords : [],
     isOverdue,
-    canManage: boardOwnerId.toString() === currentUserId.toString(),
+    canManage:
+      boardOwnerId.toString() === currentUserId.toString() ||
+      assigneeIds.some((assignee) => (assignee._id || assignee).toString() === currentUserId.toString()),
     canChangeStatus:
       boardOwnerId.toString() === currentUserId.toString() ||
       assigneeIds.some((assignee) => (assignee._id || assignee).toString() === currentUserId.toString()),
@@ -189,7 +192,7 @@ const createTask = asyncHandler(async (req, res) => {
   const title = requireNonEmptyString(req.body.title, "title", 120);
   const description = optionalTrimmedString(req.body.description, 8000);
   const emoji = optionalTrimmedString(req.body.emoji, 16);
-  const status = req.body.status ? ensureEnum(req.body.status, STATUS_VALUES, "status") : "TODO";
+  let status = req.body.status ? ensureEnum(req.body.status, STATUS_VALUES, "status") : "TODO";
   const priority = req.body.priority
     ? ensureEnum(req.body.priority, PRIORITY_VALUES, "priority")
     : "MEDIUM";
@@ -204,6 +207,20 @@ const createTask = asyncHandler(async (req, res) => {
 
   if (startDate && dueDate && startDate > dueDate) {
     throw createHttpError(400, "startDate cannot be after dueDate");
+  }
+
+  if (checklist.length > 0) {
+    const completedCount = checklist.filter((item) => item.completed).length;
+    const allCompleted = completedCount === checklist.length;
+    const noneCompleted = completedCount === 0;
+
+    if (allCompleted) {
+      status = "DONE";
+    } else if (!noneCompleted) {
+      status = "IN_PROGRESS";
+    } else {
+      status = "TODO";
+    }
   }
 
   const task = await Task.create({
@@ -230,11 +247,21 @@ const createTask = asyncHandler(async (req, res) => {
     entity: "task",
   });
 
-  await Promise.allSettled(
-    (task.assigneeIds || [])
-      .filter((assignee) => assignee._id.toString() !== req.user._id.toString())
-      .map((assignee) => sendTaskAssignedEmail(assignee.email, task, req.board.name))
-  );
+  const notifyAssignees = (task.assigneeIds || [])
+    .filter((assignee) => assignee._id.toString() !== req.user._id.toString());
+
+  await Promise.allSettled([
+    ...notifyAssignees.map((assignee) => sendTaskAssignedEmail(assignee.email, task, req.board.name)),
+    ...notifyAssignees.map((assignee) =>
+      Notification.create({
+        userId: assignee._id,
+        type: "TASK_ASSIGNED",
+        message: `${req.user.name} assigned you to "${task.title}"`,
+        link: `/boards/${req.board._id}`,
+        metadata: { boardId: req.board._id, taskId: task._id },
+      })
+    ),
+  ]);
 
   res.status(201).json(serializeTask(task, req.board.ownerId, req.user._id));
 });
@@ -242,6 +269,7 @@ const createTask = asyncHandler(async (req, res) => {
 const updateTask = asyncHandler(async (req, res) => {
   const previousStatus = req.task.status;
   const originalTitle = req.task.title;
+  const originalAssigneeIds = (req.task.assigneeIds || []).map((a) => (a._id || a).toString());
 
   if (req.body.title !== undefined) {
     req.task.title = requireNonEmptyString(req.body.title, "title", 120);
@@ -260,12 +288,14 @@ const updateTask = asyncHandler(async (req, res) => {
   }
 
   if (req.body.assigneeId !== undefined || req.body.assigneeIds !== undefined) {
-    const assigneeIds = await ensureAssigneesOnBoard(
-      req.board,
-      req.body.assigneeIds !== undefined ? req.body.assigneeIds : req.body.assigneeId || null
-    );
-    req.task.assigneeIds = assigneeIds;
-    req.task.assigneeId = assigneeIds[0] || null;
+    if (req.board.ownerId.toString() === req.user._id.toString()) {
+      const assigneeIds = await ensureAssigneesOnBoard(
+        req.board,
+        req.body.assigneeIds !== undefined ? req.body.assigneeIds : req.body.assigneeId || null
+      );
+      req.task.assigneeIds = assigneeIds;
+      req.task.assigneeId = assigneeIds[0] || null;
+    }
   }
 
   if (req.body.keywords !== undefined) {
@@ -291,6 +321,22 @@ const updateTask = asyncHandler(async (req, res) => {
   if (req.body.status !== undefined) {
     req.task.status = ensureEnum(req.body.status, STATUS_VALUES, "status");
   }
+  
+  if (req.body.checklist !== undefined) {
+    if (req.task.checklist.length > 0) {
+      const completedCount = req.task.checklist.filter((item) => item.completed).length;
+      const allCompleted = completedCount === req.task.checklist.length;
+      const noneCompleted = completedCount === 0;
+
+      if (allCompleted) {
+        req.task.status = "DONE";
+      } else if (!noneCompleted) {
+        req.task.status = "IN_PROGRESS";
+      } else {
+        req.task.status = "TODO";
+      }
+    }
+  }
 
   await req.task.save();
   await req.task.populate("assigneeId", "name email avatar");
@@ -310,14 +356,43 @@ const updateTask = asyncHandler(async (req, res) => {
       action: `changed "${req.task.title || originalTitle}" status to ${req.task.status}`,
       entity: "task",
     });
+
+    // Notify assignees about status change
+    const statusAssignees = (req.task.assigneeIds || [])
+      .filter((assignee) => (assignee._id || assignee).toString() !== req.user._id.toString());
+    await Promise.allSettled(
+      statusAssignees.map((assignee) =>
+        Notification.create({
+          userId: assignee._id || assignee,
+          type: "TASK_STATUS_CHANGED",
+          message: `"${req.task.title || originalTitle}" moved to ${req.task.status.replace("_", " ")}`,
+          link: `/boards/${req.board._id}`,
+          metadata: { boardId: req.board._id, taskId: req.task._id },
+        })
+      )
+    );
   }
 
   if (req.body.assigneeId !== undefined || req.body.assigneeIds !== undefined) {
-    await Promise.allSettled(
-      (req.task.assigneeIds || [])
-        .filter((assignee) => assignee._id.toString() !== req.user._id.toString())
-        .map((assignee) => sendTaskAssignedEmail(assignee.email, req.task, req.board.name))
-    );
+    if (req.board.ownerId.toString() === req.user._id.toString()) {
+      const newAssignees = (req.task.assigneeIds || [])
+        .filter((assignee) => !originalAssigneeIds.includes((assignee._id || assignee).toString()) && (assignee._id || assignee).toString() !== req.user._id.toString());
+      
+      if (newAssignees.length > 0) {
+        await Promise.allSettled([
+          ...newAssignees.map((assignee) => sendTaskAssignedEmail(assignee.email, req.task, req.board.name)),
+          ...newAssignees.map((assignee) =>
+            Notification.create({
+              userId: assignee._id || assignee,
+              type: "TASK_ASSIGNED",
+              message: `${req.user.name} assigned you to "${req.task.title}"`,
+              link: `/boards/${req.board._id}`,
+              metadata: { boardId: req.board._id, taskId: req.task._id },
+            })
+          ),
+        ]);
+      }
+    }
   }
 
   res.json(serializeTask(req.task, req.board.ownerId, req.user._id));

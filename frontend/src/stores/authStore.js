@@ -15,7 +15,7 @@ function mapAuthUser(payload) {
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
-    token: localStorage.getItem('taskmanager_token'),
+    token: localStorage.getItem('taskmanager_token') || sessionStorage.getItem('taskmanager_token'),
     isLoading: false,
     initialized: false,
     error: null
@@ -24,25 +24,35 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (state) => Boolean(state.token && state.user)
   },
   actions: {
-    setToken(token) {
+    setToken(token, rememberMe = null) {
       this.token = token || null
 
       if (token) {
-        localStorage.setItem('taskmanager_token', token)
+        if (rememberMe === true) {
+          localStorage.setItem('taskmanager_token', token)
+          sessionStorage.removeItem('taskmanager_token')
+        } else if (rememberMe === false) {
+          sessionStorage.setItem('taskmanager_token', token)
+          localStorage.removeItem('taskmanager_token')
+        } else if (!localStorage.getItem('taskmanager_token') && !sessionStorage.getItem('taskmanager_token')) {
+          // Default to localStorage if not specified and not already stored
+          localStorage.setItem('taskmanager_token', token)
+        }
       } else {
         localStorage.removeItem('taskmanager_token')
+        sessionStorage.removeItem('taskmanager_token')
       }
     },
     setUser(user) {
       this.user = mapAuthUser(user)
     },
-    async login(email, password) {
+    async login(email, password, rememberMe = false) {
       this.isLoading = true
       this.error = null
 
       try {
         const data = await authService.login(email, password)
-        this.setToken(data.token)
+        this.setToken(data.token, rememberMe)
         this.setUser(data)
         this.initialized = true
         return data
@@ -139,7 +149,7 @@ export const useAuthStore = defineStore('auth', {
         return
       }
 
-      const token = localStorage.getItem('taskmanager_token')
+      const token = localStorage.getItem('taskmanager_token') || sessionStorage.getItem('taskmanager_token')
 
       if (!token) {
         this.initialized = true

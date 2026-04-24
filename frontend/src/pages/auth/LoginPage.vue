@@ -43,7 +43,7 @@
       <div class="flex items-center justify-between mt-[-8px]">
         <label class="flex items-center gap-2 cursor-pointer group">
           <div class="relative flex items-center justify-center w-5 h-5">
-            <input type="checkbox" class="peer appearance-none w-5 h-5 rounded-[4px] border-2 border-outline-variant/50 bg-surface-container-highest checked:bg-primary checked:border-primary focus:ring-2 focus:ring-primary/20 focus:ring-offset-0 transition-all cursor-pointer" />
+            <input type="checkbox" v-model="form.rememberMe" class="peer appearance-none w-5 h-5 rounded-[4px] border-2 border-outline-variant/50 bg-surface-container-highest checked:bg-primary checked:border-primary focus:ring-2 focus:ring-primary/20 focus:ring-offset-0 transition-all cursor-pointer" />
             <span class="material-symbols-outlined text-on-primary text-[14px] absolute pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" style="font-variation-settings: 'FILL' 1;">check</span>
           </div>
           <span class="text-sm font-body text-on-surface-variant group-hover:text-on-surface transition-colors">Remember me</span>
@@ -114,7 +114,7 @@ import { isRequired, isValidEmail, minLength } from '@/utils/validators'
 import authService from '@/api/authService'
 import AppSpinner from '@/components/shared/AppSpinner.vue'
 
-const form = reactive({ email: '', password: '' })
+const form = reactive({ email: '', password: '', rememberMe: false })
 const unverifiedEmail = ref('')
 const loginLoading = ref(false)
 const resendLoading = ref(false)
@@ -126,8 +126,7 @@ const { errors, validate } = useFormValidation({
     { validator: isValidEmail, message: 'Invalid email address' }
   ],
   password: [
-    { validator: isRequired, message: 'Password is required' },
-    { validator: minLength(6), message: 'Password must be at least 6 characters' }
+    { validator: isRequired, message: 'Password is required' }
   ]
 })
 
@@ -143,7 +142,7 @@ const handleLogin = async () => {
   loginLoading.value = true
   
   try {
-    await authStore.login(form.email, form.password)
+    await authStore.login(form.email, form.password, form.rememberMe)
     uiStore.addToast('success', 'Logged in successfully')
     router.push('/dashboard')
   } catch (err) {

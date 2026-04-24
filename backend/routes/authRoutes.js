@@ -18,6 +18,7 @@ const {
   loginSchema,
   updateProfileSchema,
   forgotPasswordSchema,
+  resendVerificationSchema,
   resetPasswordSchema
 } = require("../utils/validations");
 
@@ -26,7 +27,7 @@ const router = express.Router();
 router.post("/register", validateRequest(registerSchema), registerUser);
 router.post("/login", validateRequest(loginSchema), loginUser);
 router.get("/verify-email", verifyEmail);
-router.post("/resend-verification", resendVerificationEmail);
+router.post("/resend-verification", validateRequest(resendVerificationSchema), resendVerificationEmail);
 router.post("/forgot-password", validateRequest(forgotPasswordSchema), requestPasswordReset);
 router.post("/reset-password/:token", validateRequest(resetPasswordSchema), resetPasswordWithToken);
 

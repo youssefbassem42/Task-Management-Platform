@@ -3,6 +3,7 @@ const Board = require("../models/Board");
 const Comment = require("../models/Comment");
 const FileAttachment = require("../models/FileAttachment");
 const Activity = require("../models/Activity");
+const Notification = require("../models/Notification");
 const Task = require("../models/Task");
 const User = require("../models/User");
 const { asyncHandler, createHttpError } = require("../utils/http");
@@ -90,11 +91,31 @@ const getBoards = asyncHandler(async (req, res) => {
     {
       $group: {
         _id: "$boardId",
-        totalTasks: { $sum: 1 },
+        totalTasks: {
+          $sum: {
+            $cond: [
+              { $gt: [{ $size: { $ifNull: ["$checklist", []] } }, 0] },
+              { $size: "$checklist" },
+              1
+            ]
+          }
+        },
         completedTasks: {
           $sum: {
-            $cond: [{ $eq: ["$status", "DONE"] }, 1, 0],
-          },
+            $cond: [
+              { $gt: [{ $size: { $ifNull: ["$checklist", []] } }, 0] },
+              {
+                $size: {
+                  $filter: {
+                    input: "$checklist",
+                    as: "item",
+                    cond: { $eq: ["$$item.completed", true] }
+                  }
+                }
+              },
+              { $cond: [{ $eq: ["$status", "DONE"] }, 1, 0] }
+            ]
+          }
         },
       },
     },
@@ -206,6 +227,17 @@ const joinBoardByInvite = asyncHandler(async (req, res) => {
       action: "joined the board",
       entity: "board",
     });
+
+    // Notify board owner
+    if (board.ownerId.toString() !== req.user._id.toString()) {
+      await Notification.create({
+        userId: board.ownerId,
+        type: "BOARD_MEMBER_JOINED",
+        message: `${req.user.name} joined your board "${board.name}"`,
+        link: `/boards/${board._id}`,
+        metadata: { boardId: board._id },
+      }).catch(() => {});
+    }
   }
 
   res.json({

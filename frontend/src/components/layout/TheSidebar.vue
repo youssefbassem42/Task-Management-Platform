@@ -21,6 +21,12 @@
           {{ item.icon }}
         </span>
         <span>{{ item.label }}</span>
+        <span
+          v-if="item.badge && item.badge() > 0"
+          class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow"
+        >
+          {{ item.badge() > 99 ? '99+' : item.badge() }}
+        </span>
       </router-link>
     </nav>
 
@@ -34,22 +40,50 @@
         Create Board
       </button>
     </div>
+
+    <!-- Logout button -->
+    <button
+      @click="handleLogout"
+      class="mt-4 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+    >
+      <span class="material-symbols-outlined text-[22px]">logout</span>
+      <span>Sign Out</span>
+    </button>
   </aside>
 </template>
 
 <script setup>
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/uiStore'
+import { useAuthStore } from '@/stores/authStore'
+import { useNotificationStore } from '@/stores/notificationStore'
+import { useMessageStore } from '@/stores/messageStore'
 
 const route = useRoute()
+const router = useRouter()
 const uiStore = useUIStore()
+const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
+const messageStore = useMessageStore()
 
 defineEmits(['createBoard'])
 
 const items = [
   { label: 'Dashboard', to: '/dashboard', icon: 'grid_view' },
   { label: 'Boards', to: '/boards', icon: 'view_kanban' },
-  { label: 'Members', to: '/users', icon: 'group' },
+  { label: 'Members', to: '/members', icon: 'group' },
+  {
+    label: 'Chat',
+    to: '/chat',
+    icon: 'chat',
+    badge: () => messageStore.totalUnread
+  },
+  {
+    label: 'Notifications',
+    to: '/notifications',
+    icon: 'notifications',
+    badge: () => notificationStore.unreadCount
+  },
   { label: 'Settings', to: '/profile', icon: 'settings' }
 ]
 
@@ -62,6 +96,12 @@ const closeOnMobile = () => {
   if (uiStore.mobileDrawerOpen) {
     uiStore.toggleMobileDrawer()
   }
+}
+
+const handleLogout = () => {
+  closeOnMobile()
+  authStore.logout()
+  router.push('/login')
 }
 </script>
 

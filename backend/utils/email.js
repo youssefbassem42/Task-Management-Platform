@@ -107,10 +107,30 @@ const sendTaskReminderEmail = async (email, taskDetails, boardName, reminderType
   await sendEmail(email, `[Action Required] ${subjectPrefix}: ${taskDetails.title}`, htmlContent);
 };
 
+const sendNewMessageEmail = async (email, senderName, messageText, senderId) => {
+  const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const preview = messageText.length > 200 ? messageText.slice(0, 200) + '…' : messageText;
+  const chatLink = senderId ? `${FRONTEND_URL}/chat/${senderId}` : `${FRONTEND_URL}/chat`;
+  const htmlContent = `
+    <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:520px;margin:0 auto;color:#1a1a2e;">
+      <h2 style="margin:0 0 12px;font-size:20px;">New Message from ${senderName}</h2>
+      <p style="color:#555;margin:0 0 20px;font-size:14px;">You have received a new direct message on Taskify.</p>
+      <div style="background:#f8f9fb;padding:16px 20px;margin:0 0 24px;border-left:4px solid #6750A4;border-radius:0 12px 12px 0;">
+        <p style="margin:0 0 8px;font-weight:600;font-size:13px;color:#6750A4;">${senderName} wrote:</p>
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#333;white-space:pre-wrap;">${preview}</p>
+      </div>
+      <a href="${chatLink}" style="display:inline-block;padding:12px 28px;background:#6750A4;color:#fff;text-decoration:none;border-radius:24px;font-weight:600;font-size:14px;">Open Conversation</a>
+      <p style="margin:20px 0 0;font-size:12px;color:#888;">Log in to Taskify to reply.</p>
+    </div>
+  `;
+  await sendEmail(email, `💬 ${senderName} sent you a message`, htmlContent);
+};
+
 module.exports = {
   sendEmail,
   sendAccountVerificationEmail,
   sendPasswordResetEmail,
   sendTaskAssignedEmail,
-  sendTaskReminderEmail
+  sendTaskReminderEmail,
+  sendNewMessageEmail
 };

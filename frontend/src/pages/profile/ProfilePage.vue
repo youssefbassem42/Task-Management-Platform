@@ -66,24 +66,25 @@
             <label class="text-sm font-semibold text-on-surface-variant uppercase tracking-widest text-[11px]" for="oldPassword">Current Password</label>
             <input 
               id="oldPassword" 
-              class="bg-surface border-none rounded-xl px-4 py-3 text-on-surface-variant w-full opacity-80 cursor-not-allowed ring-1 ring-outline-variant/10" 
-              placeholder="Not required" 
-              disabled
+              v-model="form.currentPassword"
+              class="bg-surface-container-highest rounded-xl px-4 py-3 text-on-surface focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/40 focus:outline-none transition-all border border-transparent shadow-inner w-full" 
+              :class="{'ring-2 ring-error/50 focus:ring-error': errors.currentPassword}"
+              placeholder="Enter current password" 
               type="password"
-              title="Only update your new password below"
             />
+            <span v-if="errors.currentPassword" class="text-xs text-error font-medium mt-1">{{ errors.currentPassword }}</span>
           </div>
           <div class="flex flex-col gap-2 mt-2">
             <label class="text-sm font-semibold text-on-surface-variant uppercase tracking-widest text-[11px]" for="newPassword">New Password</label>
             <input 
               id="newPassword" 
-              v-model="form.password"
+              v-model="form.newPassword"
               class="bg-surface-container-highest rounded-xl px-4 py-3 text-on-surface focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/40 focus:outline-none transition-all border border-transparent shadow-inner w-full" 
-              :class="{'ring-2 ring-error/50 focus:ring-error': errors.password}"
-              placeholder="Minimum 6 characters" 
+              :class="{'ring-2 ring-error/50 focus:ring-error': errors.newPassword}"
+              placeholder="Minimum 8 characters" 
               type="password"
             />
-            <span v-if="errors.password" class="text-xs text-error font-medium mt-1">{{ errors.password }}</span>
+            <span v-if="errors.newPassword" class="text-xs text-error font-medium mt-1">{{ errors.newPassword }}</span>
             <p v-else class="text-xs text-on-surface-variant/70 mt-1">Leave blank unless you want to change it.</p>
           </div>
         </div>
@@ -125,7 +126,8 @@ const avatarPreview = ref('')
 const form = reactive({
   name: '',
   email: '',
-  password: ''
+  currentPassword: '',
+  newPassword: ''
 })
 
 const { errors, validate } = useFormValidation({
@@ -134,7 +136,8 @@ const { errors, validate } = useFormValidation({
     { validator: isRequired, message: 'Email is required' },
     { validator: isValidEmail, message: 'Invalid email' }
   ],
-  password: [{ validator: (value) => !value || minLength(6)(value), message: 'Password must be at least 6 characters' }]
+  currentPassword: [{ validator: (value) => !form.newPassword || (value && value.length > 0), message: 'Current password is required to set a new password' }],
+  newPassword: [{ validator: (value) => !value || minLength(8)(value), message: 'Password must be at least 8 characters' }]
 })
 
 onMounted(() => {
@@ -189,12 +192,14 @@ const saveProfile = async () => {
       email: form.email
     }
 
-    if (form.password) {
-      payload.password = form.password
+    if (form.newPassword) {
+      payload.currentPassword = form.currentPassword
+      payload.newPassword = form.newPassword
     }
 
     await authStore.updateProfile(payload)
-    form.password = ''
+    form.currentPassword = ''
+    form.newPassword = ''
     uiStore.addToast('success', 'Profile updated successfully')
   } catch (error) {
     uiStore.addToast('error', error.message || 'Failed to update profile')

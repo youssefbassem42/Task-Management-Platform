@@ -25,10 +25,12 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useNotificationStore } from '@/stores/notificationStore'
 import TheSidebar from '@/components/layout/TheSidebar.vue'
 import TheTopBar from '@/components/layout/TheTopBar.vue'
 
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 const router = useRouter()
 
 const openCreateBoardModal = () => {
@@ -37,6 +39,7 @@ const openCreateBoardModal = () => {
 
 onMounted(() => {
   authStore.initializeAuth();
+  notificationStore.fetchNotifications().catch(() => {});
 })
 </script>
 

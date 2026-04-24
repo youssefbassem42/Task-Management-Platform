@@ -14,9 +14,9 @@
           <div class="flex items-center gap-3">
             <span class="text-[11px] font-label font-bold uppercase tracking-widest text-on-surface-variant">Progress</span>
             <div class="w-32 h-2 bg-surface-container-highest rounded-full overflow-hidden">
-              <div class="h-full bg-secondary rounded-full" :style="{ width: `${boardStore.boardProgress(boardStore.currentBoard)}%` }"></div>
+              <div class="h-full bg-secondary rounded-full" :style="{ width: `${localBoardProgress}%` }"></div>
             </div>
-            <span class="text-xs font-medium text-on-surface-variant">{{ boardStore.boardProgress(boardStore.currentBoard) }}%</span>
+            <span class="text-xs font-medium text-on-surface-variant">{{ localBoardProgress }}%</span>
           </div>
           <div class="hidden sm:flex items-center">
             <div class="flex -space-x-2">
@@ -253,7 +253,7 @@
               </div>
             </div>
             
-            <button @click="openCreateModal" v-if="column.value === 'TODO' && activeTab === 'active'" class="w-full py-2.5 mt-1 flex items-center justify-center gap-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-variant/40 rounded-lg transition-colors border border-dashed border-outline-variant/50">
+            <button @click="openCreateModal" v-if="column.value === 'TODO' && activeTab === 'active' && boardStore.currentBoard?.isOwner" class="w-full py-2.5 mt-1 flex items-center justify-center gap-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-variant/40 rounded-lg transition-colors border border-dashed border-outline-variant/50">
                 <span class="material-symbols-outlined text-[18px]">add</span> Add Task
             </button>
           </div>
@@ -454,6 +454,27 @@ const groupedTasks = computed(() =>
   }, {})
 )
 const unassignedTasks = computed(() => boardStore.tasks.filter((task) => !(task.assigneeIds?.length)))
+
+const localBoardProgress = computed(() => {
+  const tasks = boardStore.tasks || []
+  if (!tasks.length) return 0
+
+  let total = 0
+  let completed = 0
+
+  tasks.forEach((task) => {
+    const checklist = Array.isArray(task.checklist) ? task.checklist : []
+    if (checklist.length > 0) {
+      total += checklist.length
+      completed += checklist.filter((item) => item.completed).length
+    } else {
+      total += 1
+      if (task.status === 'DONE') completed += 1
+    }
+  })
+
+  return total > 0 ? Math.round((completed / total) * 100) : 0
+})
 const timelineDays = computed(() => {
   const start = startOfDay(new Date())
   return eachDayOfInterval({ start, end: addDays(start, 13) }).map((date) => ({

@@ -79,11 +79,33 @@ const loadTask = asyncHandler(async (req, res, next) => {
   next();
 });
 
+const requireTaskManageAccess = asyncHandler(async (req, res, next) => {
+  const userId = req.user._id.toString();
+  const isOwner = req.board.ownerId.toString() === userId;
+  const isAssignee =
+    (Array.isArray(req.task.assigneeIds) &&
+      req.task.assigneeIds.some(
+        (assignee) => (assignee._id || assignee).toString() === userId
+      )) ||
+    (req.task.assigneeId &&
+      (req.task.assigneeId._id || req.task.assigneeId).toString() === userId);
+
+  if (!isOwner && !isAssignee) {
+    throw createHttpError(
+      403,
+      "Only the board owner or task assignee can perform this action"
+    );
+  }
+
+  next();
+});
+
 module.exports = {
   protect,
   loadBoard,
   requireBoardAccess,
   requireBoardOwner,
   loadTask,
+  requireTaskManageAccess,
   userCanAccessBoard,
 };

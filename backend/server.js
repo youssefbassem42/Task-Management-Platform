@@ -7,6 +7,9 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const boardRoutes = require("./routes/boardRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const searchRoutes = require("./routes/searchRoutes");
 const { errorHandler } = require("./middlewares/errorMiddleware");
 const { ensureUploadsDir } = require("./utils/files");
 
@@ -32,6 +35,9 @@ require("./scripts/cronJobs");
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/boards", boardRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/search", searchRoutes);
 
 app.use((req, res, next) => {
   const error = new Error("Route not found");
