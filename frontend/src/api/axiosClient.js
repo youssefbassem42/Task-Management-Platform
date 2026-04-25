@@ -12,6 +12,9 @@ axiosClient.interceptors.request.use((config) => {
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+    console.log(`[AXIOS] Request to ${config.url} - Token attached`);
+  } else {
+    console.warn(`[AXIOS] Request to ${config.url} - NO TOKEN FOUND`);
   }
 
   return config
@@ -23,6 +26,7 @@ axiosClient.interceptors.response.use(
     const fallbackMessage = error.message || 'Network Error'
 
     if (!error.response) {
+      console.error('[AXIOS] Network error:', fallbackMessage);
       return Promise.reject({
         message: fallbackMessage,
         status: 0,
@@ -37,7 +41,8 @@ axiosClient.interceptors.response.use(
     }
 
     if (error.response.status === 401) {
-        console.warn("Unauthorized request, but keeping token for debugging");
+        const token = localStorage.getItem('taskmanager_token') || sessionStorage.getItem('taskmanager_token');
+        console.warn("[AXIOS] 401 Unauthorized - Token exists?", !!token, "- Keeping token, do NOT auto-logout");
     }
 
     return Promise.reject(normalizedError)

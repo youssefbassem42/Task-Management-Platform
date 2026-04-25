@@ -28,6 +28,7 @@ export const useAuthStore = defineStore('auth', {
       this.token = token || null
 
       if (token) {
+        console.log("[AUTH] Token set - storing in", rememberMe === true ? "localStorage" : rememberMe === false ? "sessionStorage" : "localStorage (default)");
         if (rememberMe === true) {
           localStorage.setItem('taskmanager_token', token)
           sessionStorage.removeItem('taskmanager_token')
@@ -39,6 +40,7 @@ export const useAuthStore = defineStore('auth', {
           localStorage.setItem('taskmanager_token', token)
         }
       } else {
+        console.warn("[AUTH] Token removed - clearing storage");
         localStorage.removeItem('taskmanager_token')
         sessionStorage.removeItem('taskmanager_token')
       }
@@ -82,20 +84,23 @@ export const useAuthStore = defineStore('auth', {
     },
     async fetchProfile() {
       if (!this.token) {
+        console.warn("[AUTH] fetchProfile called but no token available");
         this.user = null
         return null
       }
 
+      console.log("[AUTH] Fetching profile with token");
       this.isLoading = true
       this.error = null
 
       try {
         const user = await authService.getProfile()
         this.setUser(user)
+        console.log("[AUTH] Profile fetched successfully");
         return user
       } catch (err) {
         this.error = err.message
-        console.warn("fetchProfile failed, keeping token for retry")
+        console.warn("[AUTH] Profile fetch failed but keeping token for retry - Error:", err.message);
         throw err
       } finally {
         this.isLoading = false

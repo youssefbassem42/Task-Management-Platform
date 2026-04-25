@@ -75,7 +75,9 @@ onMounted(async () => {
       await authStore.fetchProfile();
     } catch (profileError) {
       // Token might be valid but user doesn't exist or server error
-      authStore.setToken(null);
+      // IMPORTANT: Do NOT delete token on profile fetch failure
+      // Token may still be valid, profile fetch might fail due to temporary server issues
+      console.warn("Profile fetch failed but token preserved:", profileError?.message);
       errorMessage.value = 'Failed to fetch profile. Please try logging in again.';
       isProcessing.value = false;
       uiStore.addToast('error', 'Failed to fetch profile data.');
@@ -87,8 +89,13 @@ onMounted(async () => {
     router.push('/dashboard');
   } catch (error) {
     // Catch-all for unexpected errors
+    // IMPORTANT: Do NOT delete token on errors - let it persist for debugging/retry
     console.error('OAuth callback error:', error);
-    authStore.setToken(null);
+    console.warn('Token status:', {
+      inLocalStorage: !!localStorage.getItem('taskmanager_token'),
+      inSessionStorage: !!sessionStorage.getItem('taskmanager_token'),
+      inStore: !!authStore.token
+    });
     errorMessage.value = 'An unexpected error occurred. Please try again.';
     isProcessing.value = false;
     uiStore.addToast('error', error?.message || 'Authentication error.');
