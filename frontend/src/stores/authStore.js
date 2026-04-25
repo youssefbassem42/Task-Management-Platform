@@ -95,7 +95,7 @@ export const useAuthStore = defineStore('auth', {
         return user
       } catch (err) {
         this.error = err.message
-        this.logout()
+        console.warn("fetchProfile failed, keeping token for retry")
         throw err
       } finally {
         this.isLoading = false
