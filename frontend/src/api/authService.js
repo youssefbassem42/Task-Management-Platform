@@ -1,5 +1,7 @@
 import axiosClient from './axiosClient'
 
+const MAX_RETRIES = 1;
+
 export default {
   login(email, password) {
     return axiosClient.post('auth/login', { email, password })
@@ -7,9 +9,27 @@ export default {
   register(payload) {
     return axiosClient.post('/auth/register', payload)
   },
-  getProfile() {
-    return axiosClient.get('/auth/profile')
+  
+  // ✅ Profile fetch with retry logic for Render cold start
+  async getProfile(retryCount = 0) {
+    try {
+      return await axiosClient.get('/auth/profile')
+    } catch (err) {
+      // Retry once on 401 if not a token validity issue (might be server warmup)
+      if (
+        err.status === 401 && 
+        err.errorCode !== 'TOKEN_INVALID' && 
+        err.errorCode !== 'TOKEN_EXPIRED' &&
+        retryCount < MAX_RETRIES
+      ) {
+        console.warn('[AUTH] Profile fetch failed with 401, retrying once...', err.errorCode);
+        await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+        return this.getProfile(retryCount + 1);
+      }
+      throw err;
+    }
   },
+  
   updateProfile(payload) {
     return axiosClient.put('/auth/profile', payload)
   },

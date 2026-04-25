@@ -18,7 +18,10 @@ export const useAuthStore = defineStore('auth', {
     token: localStorage.getItem('taskmanager_token') || sessionStorage.getItem('taskmanager_token'),
     isLoading: false,
     initialized: false,
-    error: null
+    error: null,
+    // ✅ NEW: Track which storage we're using
+    tokenStorage: localStorage.getItem('taskmanager_token') ? 'local' : 
+                 sessionStorage.getItem('taskmanager_token') ? 'session' : 'local'
   }),
   getters: {
     isAuthenticated: (state) => Boolean(state.token && state.user)
@@ -28,16 +31,24 @@ export const useAuthStore = defineStore('auth', {
       this.token = token || null
 
       if (token) {
-        console.log("[AUTH] Token set - storing in", rememberMe === true ? "localStorage" : rememberMe === false ? "sessionStorage" : "localStorage (default)");
+        console.log("[AUTH] Token set - storing in", rememberMe === true ? "localStorage" : rememberMe === false ? "sessionStorage" : "preferred storage");
         if (rememberMe === true) {
           localStorage.setItem('taskmanager_token', token)
           sessionStorage.removeItem('taskmanager_token')
+          this.tokenStorage = 'local'
         } else if (rememberMe === false) {
           sessionStorage.setItem('taskmanager_token', token)
           localStorage.removeItem('taskmanager_token')
-        } else if (!localStorage.getItem('taskmanager_token') && !sessionStorage.getItem('taskmanager_token')) {
-          // Default to localStorage if not specified and not already stored
-          localStorage.setItem('taskmanager_token', token)
+          this.tokenStorage = 'session'
+        } else {
+          // ✅ NEW: Preserve existing storage preference, default to localStorage
+          if (this.tokenStorage === 'session') {
+            sessionStorage.setItem('taskmanager_token', token)
+            localStorage.removeItem('taskmanager_token')
+          } else {
+            localStorage.setItem('taskmanager_token', token)
+            sessionStorage.removeItem('taskmanager_token')
+          }
         }
       } else {
         console.warn("[AUTH] Token removed - clearing storage");

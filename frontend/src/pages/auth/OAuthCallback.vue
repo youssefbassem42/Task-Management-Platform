@@ -73,25 +73,35 @@ onMounted(async () => {
     // Edge case 3: Failed profile fetch
     try {
       await authStore.fetchProfile();
+      uiStore.addToast('success', 'Logged in successfully via OAuth');
+      router.push('/dashboard');
     } catch (profileError) {
-      // Token might be valid but user doesn't exist or server error
-      // IMPORTANT: Do NOT delete token on profile fetch failure
-      // Token may still be valid, profile fetch might fail due to temporary server issues
-      console.warn("Profile fetch failed but token preserved:", profileError?.message);
-      errorMessage.value = 'Failed to fetch profile. Please try logging in again.';
+      // ✅ NEW: Handle specific error codes
+      const errorCode = profileError?.errorCode;
+      
+      if (errorCode === 'TOKEN_INVALID' || errorCode === 'TOKEN_EXPIRED') {
+        // Token is invalid/expired - must logout
+        authStore.logout();
+        errorMessage.value = 'Your token is invalid or expired. Please log in again.';
+        uiStore.addToast('error', 'Token invalid or expired.');
+      } else if (errorCode === 'USER_NOT_FOUND') {
+        // User doesn't exist - must logout
+        authStore.logout();
+        errorMessage.value = 'User account not found. Please contact support.';
+        uiStore.addToast('error', 'Account not found.');
+      } else {
+        // Temporary error (server issue, cold start, etc)
+        // IMPORTANT: Do NOT delete token on profile fetch failure
+        // Token may still be valid, profile fetch might fail due to temporary server issues
+        console.warn('[OAuth] Profile fetch failed (temporary):', profileError?.message);
+        errorMessage.value = 'Failed to fetch profile. Please try logging in again.';
+        uiStore.addToast('error', 'Failed to fetch profile data.');
+      }
       isProcessing.value = false;
-      uiStore.addToast('error', 'Failed to fetch profile data.');
-      return;
     }
-
-    // Success
-    uiStore.addToast('success', 'Logged in successfully via OAuth');
-    router.push('/dashboard');
   } catch (error) {
-    // Catch-all for unexpected errors
-    // IMPORTANT: Do NOT delete token on errors - let it persist for debugging/retry
-    console.error('OAuth callback error:', error);
-    console.warn('Token status:', {
+    console.error('[OAuth] Unexpected error:', error);
+    console.warn('[OAuth] Token status:', {
       inLocalStorage: !!localStorage.getItem('taskmanager_token'),
       inSessionStorage: !!sessionStorage.getItem('taskmanager_token'),
       inStore: !!authStore.token

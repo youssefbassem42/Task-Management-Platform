@@ -30,19 +30,33 @@ axiosClient.interceptors.response.use(
       return Promise.reject({
         message: fallbackMessage,
         status: 0,
-        data: null
+        data: null,
+        errorCode: 'NETWORK_ERROR'
       })
     }
 
     const normalizedError = {
       message: error.response.data?.message || fallbackMessage,
       status: error.response.status,
-      data: error.response.data ?? null
+      data: error.response.data ?? null,
+      errorCode: error.response.data?.errorCode
     }
 
+    // ✅ NEW: Differentiate auth errors
     if (error.response.status === 401) {
-        const token = localStorage.getItem('taskmanager_token') || sessionStorage.getItem('taskmanager_token');
-        console.warn("[AXIOS] 401 Unauthorized - Token exists?", !!token, "- Keeping token, do NOT auto-logout");
+      const { errorCode, message } = error.response.data || {};
+      const token = localStorage.getItem('taskmanager_token') || sessionStorage.getItem('taskmanager_token');
+      
+      console.warn('[AXIOS] 401 Auth Error:', {
+        errorCode,
+        message,
+        tokenExists: !!token,
+        url: error.config.url
+      });
+
+      if (errorCode === 'TOKEN_INVALID' || errorCode === 'TOKEN_EXPIRED') {
+        console.warn('[AXIOS] Token invalid/expired - will trigger logout in component');
+      }
     }
 
     return Promise.reject(normalizedError)
