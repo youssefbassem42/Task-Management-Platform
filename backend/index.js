@@ -21,11 +21,10 @@ fs.mkdirSync(ensureUploadsDir, { recursive: true });
 app.use(cors({
   origin: process.env.FRONTEND_URL || "https://management-taskify.vercel.app",
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  maxAge: 86400 // 24 hours
 }));
-
+app.options("*", cors());
 app.use(express.json());
 app.use(passport.initialize());
 app.use("/uploads", express.static(path.resolve(ensureUploadsDir)));

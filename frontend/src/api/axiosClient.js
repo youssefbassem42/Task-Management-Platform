@@ -37,8 +37,7 @@ axiosClient.interceptors.response.use(
     }
 
     if (error.response.status === 401) {
-      localStorage.removeItem('taskmanager_token')
-      sessionStorage.removeItem('taskmanager_token')
+        console.warn("Unauthorized request, but keeping token for debugging");
     }
 
     return Promise.reject(normalizedError)

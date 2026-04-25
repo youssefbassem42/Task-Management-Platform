@@ -5,8 +5,11 @@ const ensureUploadsDir = path.resolve(__dirname, "..", "uploads");
 
 const sanitizeFileName = (fileName = "") => fileName.replace(/\s+/g, " ").trim();
 
-const buildFileUrl = (req, fileName) =>
-  `${req.protocol}://${req.get("host")}/uploads/${encodeURIComponent(fileName)}`;
+const buildFileUrl = (req, fileName) => {
+  const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+  const host = req.get("host");
+  return `${protocol}://${host}/uploads/${encodeURIComponent(fileName)}`;
+}
 
 const getStoredFileName = (fileUrl = "") => {
   if (!fileUrl) return null;
