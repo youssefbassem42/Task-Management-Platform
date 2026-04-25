@@ -24,7 +24,6 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.options("*", cors());
 app.use(express.json());
 app.use(passport.initialize());
 app.use("/uploads", express.static(path.resolve(ensureUploadsDir)));
