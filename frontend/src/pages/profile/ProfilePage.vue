@@ -144,7 +144,7 @@ onMounted(() => {
   if (authStore.user) {
     form.name = authStore.user.name
     form.email = authStore.user.email
-    avatarPreview.value = authStore.user.avatar || ''
+    avatarPreview.value = authStore.user.avatar || '../../assets/avatar-default.png'
   }
 })
 
@@ -160,7 +160,7 @@ watch(avatarFile, (file) => {
     URL.revokeObjectURL(avatarPreview.value)
   }
 
-  avatarPreview.value = file instanceof File ? URL.createObjectURL(file) : authStore.user?.avatar || ''
+  avatarPreview.value = file instanceof File ? URL.createObjectURL(file) : authStore.user?.avatar || '../../assets/avatar-default.png'
 })
 
 onBeforeUnmount(() => {
@@ -171,7 +171,7 @@ onBeforeUnmount(() => {
 
 const removePhoto = () => {
     avatarFile.value = null
-    avatarPreview.value = ''
+    avatarPreview.value = '../../assets/avatar-default.png'
     if(avatarInput.value) {
         avatarInput.value.value = ''
     }
