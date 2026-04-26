@@ -21,7 +21,7 @@
           <div class="hidden sm:flex items-center">
             <div class="flex -space-x-2">
                  <!--  Avatars Setup  -->
-               <img v-if="userStore.users.length" :src="userStore.users[0]?.avatar" class="w-8 h-8 rounded-full ghost-border object-cover bg-surface-container-lowest" />
+               <img v-if="userStore.users.length" :src="userStore.users[0]?.avatar || '../../assets/avatar-default.png'" class="w-8 h-8 rounded-full ghost-border object-cover bg-surface-container-lowest" />
             </div> 
           </div>
         </div>
